@@ -11,10 +11,51 @@ nltk.download('punkt')
 # -------------------------------
 # PAGE CONFIG
 # -------------------------------
-st.set_page_config(page_title="Nuvora Resume Scanner", page_icon="🤖", layout="wide")
+st.set_page_config(page_title="Nuvora Resume Scanner", page_icon="💫", layout="wide")
 
-st.title("💫 Nuvora Resume Scanner — AI Resume Screener using NLP")
-st.caption("Developed by Pearl Sethi | Final Year Project | Powered by AI & NLP 🧠")
+# -------------------------------
+# CUSTOM CSS FOR LIGHT SKY THEME
+# -------------------------------
+st.markdown("""
+    <style>
+        body {
+            background-color: #E6F0FF;
+        }
+        .stApp {
+            background-color: #E6F0FF;
+        }
+        h1, h2, h3, h4, h5, h6, p, label {
+            color: #002B5B !important;
+        }
+        .stButton button {
+            background-color: #0078FF;
+            color: white;
+            border-radius: 10px;
+            border: none;
+            padding: 0.6em 1.2em;
+            font-weight: bold;
+        }
+        .stButton button:hover {
+            background-color: #005FCC;
+            color: white;
+        }
+        textarea {
+            background-color: #ffffff !important;
+            color: #000 !important;
+        }
+        div[data-testid="stFileUploaderDropzone"] {
+            background-color: #ffffff !important;
+            border: 2px dashed #0078FF !important;
+            border-radius: 10px !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# -------------------------------
+# HEADER
+# -------------------------------
+st.title("💫 Nuvora — AI Resume Screening System")
+st.caption("Developed by Pearl Sethi | Final Year Project")
 
 # -------------------------------
 # SIDEBAR INFO
@@ -24,7 +65,7 @@ st.sidebar.write("""
 1️⃣ Paste your **Job Description**  
 2️⃣ Upload one or more **Resume PDFs**  
 3️⃣ Click **Analyze Resumes 🚀**  
-4️⃣ See **Match %, Skills Extracted**, and **Top Candidate**
+4️⃣ See **Match %, Extracted Skills**, and **Top Candidate**
 """)
 
 # -------------------------------
@@ -34,10 +75,9 @@ job_description = st.text_area("📄 Paste Job Description", height=200, placeho
 uploaded_files = st.file_uploader("📂 Upload Resume PDFs", type=["pdf"], accept_multiple_files=True)
 
 # -------------------------------
-# HELPER FUNCTIONS
+# FUNCTIONS
 # -------------------------------
 def extract_text_from_pdf(file):
-    """Extracts all text from a PDF file."""
     text = ""
     pdf_reader = PyPDF2.PdfReader(file)
     for page in pdf_reader.pages:
@@ -45,7 +85,6 @@ def extract_text_from_pdf(file):
     return text.lower()
 
 def calculate_similarity(jd_text, resume_text):
-    """Calculates cosine similarity between JD and Resume."""
     documents = [jd_text, resume_text]
     vectorizer = TfidfVectorizer(stop_words='english')
     tfidf_matrix = vectorizer.fit_transform(documents)
@@ -53,19 +92,18 @@ def calculate_similarity(jd_text, resume_text):
     return round(similarity * 100, 2)
 
 def extract_skills(text):
-    """Extracts predefined technical and soft skills from resume text."""
     skill_set = [
-        "python", "java", "c++", "html", "css", "javascript", "sql", "mongodb", "react", "node", 
-        "machine learning", "deep learning", "nlp", "data analysis", "data visualization", 
-        "power bi", "tableau", "excel", "pandas", "numpy", "matplotlib", "seaborn", "tensorflow", 
-        "keras", "communication", "leadership", "problem solving", "teamwork", "critical thinking", 
+        "python", "java", "c++", "html", "css", "javascript", "sql", "mongodb", "react", "node",
+        "machine learning", "deep learning", "nlp", "data analysis", "data visualization",
+        "power bi", "tableau", "excel", "pandas", "numpy", "matplotlib", "seaborn", "tensorflow",
+        "keras", "communication", "leadership", "problem solving", "teamwork", "critical thinking",
         "data science", "flask", "django", "git", "github"
     ]
     found_skills = [skill.title() for skill in skill_set if re.search(rf"\\b{skill}\\b", text, re.IGNORECASE)]
     return list(set(found_skills))
 
 # -------------------------------
-# MAIN ANALYSIS SECTION
+# MAIN
 # -------------------------------
 if st.button("🚀 Analyze Resumes"):
     if not job_description:
@@ -88,36 +126,29 @@ if st.button("🚀 Analyze Resumes"):
                 "skills": ", ".join(skills_found) if skills_found else "No skills detected"
             })
 
-        # Sort by similarity
         results = sorted(results, key=lambda x: x["match"], reverse=True)
 
         st.success("✅ Nuvora Analysis Complete!")
 
-        # Display Results Table
         st.subheader("🏆 Resume Ranking")
         st.dataframe(results, use_container_width=True)
 
-        # Visualization
         st.subheader("📊 Resume Match % Comparison")
         names = [r["name"] for r in results]
         scores = [r["match"] for r in results]
 
         fig, ax = plt.subplots()
-        ax.barh(names, scores, color="#8ecae6")
+        ax.barh(names, scores, color="#0078FF")
         ax.set_xlabel("Match %")
         ax.set_ylabel("Resume")
         ax.set_title("Resume Match Percentage")
         plt.gca().invert_yaxis()
         st.pyplot(fig)
 
-        # Show top match
         best = results[0]
         st.markdown(f"### 🥇 Top Match: **{best['name']}** — {best['match']}%")
         st.markdown(f"**🧠 Skills Mentioned:** {best['skills']}")
         st.balloons()
 
-# -------------------------------
-# FOOTER
-# -------------------------------
 st.markdown("---")
-st.markdown("💼 **Nuvora Resume Scanner** | AI-powered screening system built using Python & NLP 🚀")
+st.markdown("💼 **Nuvora Resume Scanner** | Final Year Project | Built using Python, NLP & Streamlit 🚀")
