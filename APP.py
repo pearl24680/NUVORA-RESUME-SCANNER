@@ -11,7 +11,7 @@ nltk.download('punkt')
 # -------------------------------
 # Page Setup
 # -------------------------------
-st.set_page_config(page_title="SmartHire - AI Resume Screener", page_icon="💼", layout="wide")
+st.set_page_config(page_title="Nuvora - AI Resume Screener", page_icon="💼", layout="wide")
 
 st.title("💫 SmartHire — AI Resume Screening using NLP")
 st.caption("Developed by Pearl Sethi | Final Year Project | Powered by NLP 🧠")
