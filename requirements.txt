@@ -2,5 +2,5 @@ streamlit
 PyPDF2
 sentence-transformers
 torch
-transformers
-numpy
+fuzzywuzzy
+python-Levenshtein
