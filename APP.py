@@ -3,9 +3,6 @@ import google.generativeai as genai
 import pdfplumber
 import re
 
-# ================================
-# 🎨 Page Configuration
-# ================================
 st.set_page_config(page_title="Nuvora AI - Resume & Career Assistant", page_icon="💼", layout="wide")
 
 # --- Custom CSS ---
@@ -37,7 +34,7 @@ st.markdown(page_bg, unsafe_allow_html=True)
 # ⚙️ Gemini API Setup
 # ================================
 if "GEMINI_API_KEY" not in st.secrets:
-    st.error("⚠️ Gemini API key not found! Please add it to your Streamlit Secrets.")
+    st.error("⚠️ Gemini API key not found! Please add it in Streamlit Secrets.")
     st.stop()
 
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
@@ -157,4 +154,3 @@ if user_input:
 if st.button("🧹 Clear Chat"):
     st.session_state.chat_history = []
     st.experimental_rerun()
-
