@@ -1,230 +1,165 @@
-# -------------------------------
-# TESTING & VALIDATION MODULE
-# -------------------------------
-import io
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.metrics import precision_recall_fscore_support
-from scipy.stats import spearmanr
 import streamlit as st
+import PyPDF2
+import re
+import matplotlib.pyplot as plt
+from sentence_transformers import SentenceTransformer, util
+import nltk
+nltk.download('punkt')
 
-st.markdown("---")
-st.header("🧪 Testing & Validation")
+# -------------------------------------------------
+# PAGE CONFIGURATION
+# -------------------------------------------------
+st.set_page_config(page_title="💫 Nuvora Resume Scanner", page_icon="💼", layout="wide")
 
-st.write("""
-This panel runs basic validation tests on the resume scanner:
-- Skill extraction: precision / recall / F1 against labeled skills (synthetic examples here).  
-- Matching model: Spearman rank correlation between predicted match % and ground-truth relevance scores.  
-You can replace synthetic examples with your labeled dataset (CSV) for real evaluation.
+# -------------------------------------------------
+# CUSTOM CSS - SKY THEME
+# -------------------------------------------------
+st.markdown("""
+<style>
+.stApp {
+    background: linear-gradient(to bottom right, #E6F0FF, #F8FBFF);
+}
+h1, h2, h3, h4, h5, h6, p, label {
+    color: #002B5B !important;
+}
+.stButton button {
+    background-color: #0078FF;
+    color: white;
+    border-radius: 10px;
+    border: none;
+    padding: 0.6em 1.2em;
+    font-weight: bold;
+}
+.stButton button:hover {
+    background-color: #005FCC;
+}
+textarea {
+    background-color: #ffffff !important;
+    color: #000 !important;
+}
+div[data-testid="stFileUploaderDropzone"] {
+    background-color: #ffffff !important;
+    border: 2px dashed #0078FF !important;
+    border-radius: 10px !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# -------------------------------------------------
+# HEADER
+# -------------------------------------------------
+st.title("💫 Nuvora — AI Resume Screening System")
+st.caption("Developed by Pearl & Vasu | Final Year Project")
+
+# -------------------------------------------------
+# SIDEBAR
+# -------------------------------------------------
+st.sidebar.header("📋 How to Use")
+st.sidebar.write("""
+1️⃣ Paste your **Job Description**  
+2️⃣ Upload one or more **Resume PDFs**  
+3️⃣ Click **Analyze Resumes 🚀**  
+4️⃣ View **Match %, Extracted Skills**, and **Top Candidate**
 """)
 
-# ----- Example / Synthetic Test Data -----
-st.subheader("1) Run synthetic tests (quick demo)")
-if st.button("Run Demo Validation"):
+# -------------------------------------------------
+# INPUT SECTION
+# -------------------------------------------------
+job_description = st.text_area("📄 Paste Job Description", height=180, placeholder="Example: Looking for Data Analyst skilled in Python, SQL, Power BI, Excel...")
+uploaded_files = st.file_uploader("📂 Upload Resume PDFs", type=["pdf"], accept_multiple_files=True)
 
-    # Example JD (ground truth requirements)
-    demo_jd = """Looking for Data Analyst with expertise in Python, SQL, Power BI, data visualization, pandas and numpy. Excellent communication skills required."""
-    # Synthetic candidate resumes (text) and labeled skills (what we expect to extract)
-    synthetic_resumes = [
-        {
-            "name": "alice_resume.txt",
-            "text": "Experienced Data Analyst skilled in Python, pandas, numpy, created dashboards using Power BI and Tableau. Strong communication.",
-            "labeled_skills": ["Python", "Pandas", "Numpy", "Power BI", "Tableau", "Communication"],
-            # ground-truth relevance from 0-100 (how good a fit)
-            "gt_relevance": 92
-        },
-        {
-            "name": "bob_resume.txt",
-            "text": "SQL developer with strong SQL knowledge, ETL pipelines, some experience in Excel and dashboards.",
-            "labeled_skills": ["SQL", "Excel"],
-            "gt_relevance": 65
-        },
-        {
-            "name": "carol_resume.txt",
-            "text": "Machine learning intern; worked with TensorFlow and Keras, research on deep learning. Limited dashboard experience.",
-            "labeled_skills": ["TensorFlow", "Keras", "Deep Learning"],
-            "gt_relevance": 55
-        },
-        {
-            "name": "dave_resume.txt",
-            "text": "Business analyst: Power BI dashboards, business reporting, stakeholder communication and SQL basics.",
-            "labeled_skills": ["Power BI", "Communication", "SQL"],
-            "gt_relevance": 78
-        }
+# -------------------------------------------------
+# LOAD BERT MODEL
+# -------------------------------------------------
+@st.cache_resource
+def load_model():
+    return SentenceTransformer('all-MiniLM-L6-v2')
+
+model = load_model()
+
+# -------------------------------------------------
+# FUNCTIONS
+# -------------------------------------------------
+def extract_text_from_pdf(file):
+    text = ""
+    pdf_reader = PyPDF2.PdfReader(file)
+    for page in pdf_reader.pages:
+        page_text = page.extract_text()
+        if page_text:
+            text += page_text + " "
+    return text.lower()
+
+def calculate_similarity(jd_text, resume_text):
+    jd_embed = model.encode(jd_text, convert_to_tensor=True)
+    resume_embed = model.encode(resume_text, convert_to_tensor=True)
+    similarity = util.pytorch_cos_sim(jd_embed, resume_embed).item()
+    return round(similarity * 100, 2)
+
+def extract_skills(text):
+    skill_set = [
+        "python", "java", "c++", "html", "css", "javascript", "sql", "mongodb",
+        "react", "node", "machine learning", "deep learning", "nlp", "data analysis",
+        "data visualization", "power bi", "tableau", "excel", "pandas", "numpy",
+        "matplotlib", "seaborn", "tensorflow", "keras", "communication", "leadership",
+        "problem solving", "teamwork", "critical thinking", "data science",
+        "flask", "django", "git", "github"
     ]
+    found = [skill.title() for skill in skill_set if re.search(rf"\\b{skill}\\b", text, re.IGNORECASE)]
+    return list(set(found))
 
-    # Run extraction + similarity for each synthetic resume
-    rows = []
-    pred_scores = []
-    gt_scores = []
-    all_gt_skills = []
-    all_pred_skills = []
-
-    for item in synthetic_resumes:
-        text = item["text"].lower()
-        pred_skills = extract_skills(text)  # uses your app function
-        match_pct = calculate_similarity(demo_jd.lower(), text)  # uses your app function
-
-        rows.append({
-            "Resume": item["name"],
-            "Pred Skills": ", ".join(pred_skills) if pred_skills else "None",
-            "GT Skills": ", ".join(item["labeled_skills"]),
-            "Pred Match %": match_pct,
-            "GT Relevance": item["gt_relevance"]
-        })
-
-        # For skill evaluation, map both to lowercase sets
-        gt_set = set([s.lower() for s in item["labeled_skills"]])
-        pred_set = set([s.lower() for s in pred_skills])
-        all_gt_skills.append(gt_set)
-        all_pred_skills.append(pred_set)
-
-        pred_scores.append(match_pct)
-        gt_scores.append(item["gt_relevance"])
-
-    result_df = pd.DataFrame(rows)
-    st.subheader("Demo Results Table")
-    st.dataframe(result_df, use_container_width=True)
-
-    # ----- Skill Extraction Metrics (micro-averaged) -----
-    # We compute precision/recall/F1 by treating all skills across resumes as independent tokens
-    # Build global lists for each occurrence
-    y_true = []
-    y_pred = []
-    # collect union of skill tokens observed in GT across resumes
-    skill_vocab = sorted(list(set().union(*all_gt_skills, *all_pred_skills)))
-    # For each resume, for each skill in vocab, mark 1/0 presence
-    for gt, pred in zip(all_gt_skills, all_pred_skills):
-        for skill in skill_vocab:
-            y_true.append(1 if skill in gt else 0)
-            y_pred.append(1 if skill in pred else 0)
-
-    precision, recall, f1, _ = precision_recall_fscore_support(y_true, y_pred, average='micro', zero_division=0)
-    st.subheader("Skill Extraction Metrics (micro-averaged)")
-    st.write(f"- Precision: **{precision:.2f}**")
-    st.write(f"- Recall: **{recall:.2f}**")
-    st.write(f"- F1-score: **{f1:.2f}**")
-
-    # ----- Matching Model Metric: Spearman Rank Correlation -----
-    # Compare predicted match % ranking vs ground-truth relevance ranking
-    if len(pred_scores) >= 2:
-        spearman_corr, spearman_p = spearmanr(pred_scores, gt_scores)
-        st.subheader("Matching Model Correlation")
-        st.write(f"- Spearman correlation: **{spearman_corr:.3f}** (p = {spearman_p:.3f})")
-        st.write("- Interpretation: a value close to 1 indicates predicted match % preserves the ground-truth ranking well.")
+# -------------------------------------------------
+# MAIN LOGIC
+# -------------------------------------------------
+if st.button("🚀 Analyze Resumes"):
+    if not job_description:
+        st.warning("⚠️ Please enter a Job Description first.")
+    elif not uploaded_files:
+        st.warning("⚠️ Please upload at least one resume.")
     else:
-        st.info("Not enough samples for Spearman correlation.")
+        st.info("⏳ Analyzing resumes... please wait...")
 
-    # ----- Plots -----
-    st.subheader("Visuals")
-    fig, ax = plt.subplots()
-    names = result_df["Resume"].tolist()
-    pred_vals = result_df["Pred Match %"].tolist()
-    gt_vals = result_df["GT Relevance"].tolist()
-    x = np.arange(len(names))
-    width = 0.35
-    ax.bar(x - width/2, pred_vals, width, label='Predicted Match %')
-    ax.bar(x + width/2, gt_vals, width, label='GT Relevance')
-    ax.set_xticks(x)
-    ax.set_xticklabels(names, rotation=30)
-    ax.set_ylabel("Score")
-    ax.set_title("Predicted Match % vs Ground Truth Relevance")
-    ax.legend()
-    st.pyplot(fig)
+        jd_text = job_description.lower()
+        results = []
 
-    # Skill frequency chart (predicted)
-    st.subheader("Skill Frequency (Predicted across resumes)")
-    # flatten predicted skills
-    flat_pred = [s for sset in all_pred_skills for s in sset]
-    if flat_pred:
-        freq = pd.Series(list(flat_pred)).value_counts()
-        fig2, ax2 = plt.subplots()
-        ax2.bar(freq.index.astype(str), freq.values)
-        ax2.set_title("Predicted Skill Frequency")
-        ax2.set_ylabel("Count")
-        ax2.set_xticklabels(freq.index.astype(str), rotation=45, ha='right')
-        st.pyplot(fig2)
-    else:
-        st.write("No predicted skills to show frequency for.")
+        for file in uploaded_files:
+            resume_text = extract_text_from_pdf(file)
+            if len(resume_text.strip()) == 0:
+                st.error(f"❌ {file.name}: No readable text found in PDF.")
+                continue
+            similarity = calculate_similarity(jd_text, resume_text)
+            skills_found = extract_skills(resume_text)
+            results.append({
+                "Resume": file.name,
+                "Match %": similarity,
+                "Skills Found": ", ".join(skills_found) if skills_found else "No skills detected"
+            })
 
-    # ----- Downloadable CSV report -----
-    csv_bytes = result_df.to_csv(index=False).encode("utf-8")
-    st.download_button("📥 Download Demo Validation CSV", data=csv_bytes, file_name="nuvora_demo_validation.csv", mime="text/csv")
-
-# ----- Upload labeled dataset for real validation -----
-st.subheader("2) Upload labeled CSV for evaluation (optional)")
-st.write("CSV should have columns: `resume_name`, `resume_text`, `gt_skills` (comma-separated), `gt_relevance` (0-100).")
-uploaded_csv = st.file_uploader("Upload labeled CSV (optional)", type=["csv"])
-
-if uploaded_csv is not None:
-    labeled_df = pd.read_csv(uploaded_csv)
-    st.write("Preview of uploaded labeled data:")
-    st.dataframe(labeled_df.head(), use_container_width=True)
-
-    if st.button("Run Validation on Uploaded Data"):
-        required_cols = {"resume_name", "resume_text", "gt_skills", "gt_relevance"}
-        if not required_cols.issubset(set(labeled_df.columns.str.lower())):
-            st.error(f"CSV must contain columns: {required_cols}")
+        if not results:
+            st.error("No valid resumes found!")
         else:
-            # Normalize column names to lower for safety
-            labeled_df.columns = [c.lower() for c in labeled_df.columns]
+            results = sorted(results, key=lambda x: x["Match %"], reverse=True)
 
-            rows = []
-            pred_scores = []
-            gt_scores = []
-            all_gt_skills = []
-            all_pred_skills = []
+            st.success("✅ Nuvora Analysis Complete!")
+            st.subheader("🏆 Resume Ranking (AI Match %)")
+            st.dataframe(results, use_container_width=True)
 
-            for _, r in labeled_df.iterrows():
-                name = r['resume_name']
-                text = str(r['resume_text']).lower()
-                gt_skills = [s.strip().lower() for s in str(r['gt_skills']).split(",") if s.strip()]
-                gt_relevance = float(r['gt_relevance'])
+            # Graph
+            st.subheader("📊 Resume Match Percentage Comparison")
+            names = [r["Resume"] for r in results]
+            scores = [r["Match %"] for r in results]
+            fig, ax = plt.subplots()
+            ax.barh(names, scores, color="#0078FF")
+            ax.set_xlabel("Match %")
+            ax.set_ylabel("Resume Name")
+            ax.set_title("Resume vs Job Description Match")
+            plt.gca().invert_yaxis()
+            st.pyplot(fig)
 
-                pred_skills = extract_skills(text)
-                pred_match = calculate_similarity(str(job_description).lower() if job_description else text, text)
+            # Best Match
+            best = results[0]
+            st.markdown(f"### 🥇 **Top Candidate:** `{best['Resume']}` — **{best['Match %']}%**")
+            st.markdown(f"**🧠 Skills Mentioned:** {best['Skills Found']}")
+            st.balloons()
 
-                rows.append({
-                    "Resume": name,
-                    "Pred Skills": ", ".join(pred_skills) if pred_skills else "None",
-                    "GT Skills": ", ".join(gt_skills),
-                    "Pred Match %": pred_match,
-                    "GT Relevance": gt_relevance
-                })
-
-                all_gt_skills.append(set(gt_skills))
-                all_pred_skills.append(set([s.lower() for s in pred_skills]))
-                pred_scores.append(pred_match)
-                gt_scores.append(gt_relevance)
-
-            out_df = pd.DataFrame(rows)
-            st.subheader("Validation Results")
-            st.dataframe(out_df, use_container_width=True)
-
-            # Skill metrics
-            skill_vocab = sorted(list(set().union(*all_gt_skills, *all_pred_skills)))
-            y_true = []
-            y_pred = []
-            for gt, pred in zip(all_gt_skills, all_pred_skills):
-                for skill in skill_vocab:
-                    y_true.append(1 if skill in gt else 0)
-                    y_pred.append(1 if skill in pred else 0)
-
-            precision, recall, f1, _ = precision_recall_fscore_support(y_true, y_pred, average='micro', zero_division=0)
-            st.write("**Skill Extraction Metrics (micro)**")
-            st.write(f"- Precision: **{precision:.3f}**")
-            st.write(f"- Recall: **{recall:.3f}**")
-            st.write(f"- F1: **{f1:.3f}**")
-
-            # Spearman correlation
-            if len(pred_scores) >= 2:
-                spearman_corr, spearman_p = spearmanr(pred_scores, gt_scores)
-                st.write("**Matching Model Correlation**")
-                st.write(f"- Spearman correlation: **{spearman_corr:.3f}** (p={spearman_p:.3f})")
-            else:
-                st.info("Not enough samples for correlation.")
-
-            # Download report
-            csv_bytes = out_df.to_csv(index=False).encode("utf-8")
-            st.download_button("📥 Download Validation Report CSV", data=csv_bytes, file_name="nuvora_validation_report.csv", mime="text/csv")
+st.markdown("---")
+st.markdown("💼 **Nuvora Resume Scanner** | Final Year Project | 🚀")
