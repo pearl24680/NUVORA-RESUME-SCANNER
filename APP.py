@@ -158,38 +158,67 @@ elif choice == "💼 Resume Project Extraction":
 # CHATBOT SECTION
 # --------------------------------------------------
 elif choice == "🤖 Ask Nuvora (AI Chat)":
-    st.title("🧠 Ask Nuvora — AI Career Assistant")
-    st.write("👋 Hi! I'm Nuvora, your AI career assistant. Ask about resumes, ATS, or interviews.")
+    st.header("💬 Ask Nuvora — AI Career Assistant")
 
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
+    st.markdown("""
+    👋 **Hi! I'm Nuvora**, your AI career assistant.  
+    Ask about resumes, ATS score improvement, interview prep, or project suggestions!
+    """)
 
-    for msg in st.session_state.chat_history:
-        if msg["role"] == "user":
-            st.markdown(f"<div class='user-msg'>👤 You: {msg['content']}</div>", unsafe_allow_html=True)
-        else:
-            st.markdown(f"<div class='bot-msg'>🤖 Nuvora: {msg['content']}</div>", unsafe_allow_html=True)
+    # ✅ Check if API key is present
+    if "OPENAI_API_KEY" not in st.secrets:
+        st.error("⚠️ AI unavailable. Please set your OpenAI API key in Streamlit Secrets.")
+        st.info("Go to Streamlit Cloud → Manage App → Settings → Secrets and add:\n\n`OPENAI_API_KEY = \"your-key-here\"`")
+    else:
+        openai_api_key = st.secrets["OPENAI_API_KEY"]
 
-    user_input = st.chat_input("Type your question here...")
+        # Chat history initialization
+        if "chat_history" not in st.session_state:
+            st.session_state.chat_history = []
 
-    if user_input:
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
+        # Chat input box
+        user_input = st.chat_input("Ask Nuvora anything about your career or resume...")
 
-        if ai_available:
+        # Show previous chat messages
+        for msg in st.session_state.chat_history:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+
+        # Process new message
+        if user_input:
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
+            with st.chat_message("user"):
+                st.markdown(user_input)
+
             try:
-                response = openai.ChatCompletion.create(
+                from openai import OpenAI
+                client = OpenAI(api_key=openai_api_key)
+
+                # Generate AI response
+                response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[
-                        {"role": "system", "content": "You are Nuvora, an AI career assistant helping with resumes, ATS, and interviews."},
-                        *st.session_state.chat_history
+                        {"role": "system", "content": "You are Nuvora, an AI career and resume advisor that gives friendly and helpful answers about job applications, resumes, and interview tips."},
+                        *st.session_state.chat_history,
+                        {"role": "user", "content": user_input}
                     ]
                 )
-                ai_reply = response["choices"][0]["message"]["content"]
-            except Exception as e:
-                ai_reply = f"⚠️ Error: {str(e)}"
-        else:
-            ai_reply = "⚠️ AI unavailable. Please set your OpenAI API key in Streamlit Secrets."
 
-        st.session_state.chat_history.append({"role": "assistant", "content": ai_reply})
-        st.rerun()
+                ai_reply = response.choices[0].message.content
+                st.session_state.chat_history.append({"role": "assistant", "content": ai_reply})
+
+                with st.chat_message("assistant"):
+                    st.markdown(ai_reply)
+
+            except Exception as e:
+                st.error("⚠️ Error connecting to OpenAI API.")
+                st.write("Error details:", str(e))
+
+        # Clear chat button
+        if st.button("🧹 Clear Chat History"):
+            st.session_state.chat_history = []
+            try:
+                st.rerun()
+            except:
+                st.experimental_rerun()
 
