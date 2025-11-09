@@ -1,181 +1,260 @@
+# -------------------------------
+# IMPORTS
+# -------------------------------
 import streamlit as st
-import os
-from PyPDF2 import PdfReader
+import PyPDF2
 import re
 import pandas as pd
+import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from fuzzywuzzy import fuzz
 from openai import OpenAI
+import os
 
 # -------------------------------
-# APP CONFIG
+# INITIAL SETUP
 # -------------------------------
-st.set_page_config(page_title="Nuvora AI – ATS Resume Analyzer", layout="wide", page_icon="💫")
+st.set_page_config(page_title="Nuvora AI — Resume Scanner", page_icon="💫", layout="wide")
 
-st.markdown("""
-    <style>
-    body {background: linear-gradient(180deg, #E6F2FF, #FFFFFF);}
-    .stApp {background-color: transparent;}
-    .title {font-size: 36px; font-weight: 800; color: #002B5B; text-align:center;}
-    .subtitle {font-size: 16px; color: #005FCC; text-align:center; margin-bottom: 20px;}
-    .card {background: #ffffff; border-radius: 12px; padding: 18px; 
-           box-shadow: 0 6px 20px rgba(0, 40, 100, 0.08);}
-    .chat-user {background:#0078FF; color:black; padding:10px 14px; border-radius:18px; float:right; margin:6px;}
-    .chat-bot {background:#F1F3F4; color:#002B5B; padding:10px 14px; border-radius:18px; float:left; margin:6px;}
-    </style>
-""", unsafe_allow_html=True)
-
-st.markdown("<div class='title'>💫 Nuvora AI — ATS Resume Analyzer & Career Chatbot</div>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>Upload resumes, analyze ATS score, and chat with your AI career mentor.</div>", unsafe_allow_html=True)
-
-# -------------------------------
-# SECURE API SETUP
-# -------------------------------
-api_key = os.getenv("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")
+# Load OpenAI client (from secrets in Streamlit)
 client = None
-if api_key:
+if "OPENAI_API_KEY" in os.environ:
     try:
-        client = OpenAI(api_key=api_key)
+        client = OpenAI(api_key=os.getenv("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"))
     except Exception:
         client = None
 
 # -------------------------------
-# FUNCTIONS
+# CUSTOM CSS — Sky Blue Theme
+# -------------------------------
+st.markdown("""
+    <style>
+        .stApp {
+            background: linear-gradient(180deg, #D9ECFF 0%, #E6F3FF 100%);
+            color: #003366;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #002B5B !important;
+            font-weight: 600;
+        }
+        p, label, span, div {
+            color: #003366;
+        }
+        .stButton button {
+            background-color: #0078FF;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.6em 1.2em;
+            font-weight: 600;
+            box-shadow: 0px 4px 8px rgba(0, 120, 255, 0.2);
+            transition: all 0.2s ease;
+        }
+        .stButton button:hover {
+            background-color: #005FCC;
+            box-shadow: 0px 6px 12px rgba(0, 95, 204, 0.3);
+        }
+        div[data-testid="stFileUploaderDropzone"] {
+            background-color: #ffffff;
+            border: 2px dashed #0078FF;
+            border-radius: 10px;
+        }
+        textarea {
+            background-color: #ffffff !important;
+            color: #000 !important;
+            border-radius: 10px !important;
+            border: 1px solid #99C2FF !important;
+        }
+        .dataframe {
+            border: 1px solid #A8CFFF !important;
+            border-radius: 10px !important;
+            background-color: white !important;
+        }
+        .chat-user {
+            background-color: #0078FF;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 15px 15px 0px 15px;
+            margin-bottom: 8px;
+            float: right;
+            max-width: 80%;
+            box-shadow: 0 4px 10px rgba(0, 120, 255, 0.3);
+        }
+        .chat-bot {
+            background-color: #ffffff;
+            color: #002B5B;
+            padding: 10px 15px;
+            border-radius: 15px 15px 15px 0px;
+            margin-bottom: 8px;
+            float: left;
+            max-width: 80%;
+            border: 1px solid #99C2FF;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 120, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        [data-testid="column"]:nth-child(2) {
+            background-color: rgba(255, 255, 255, 0.85);
+            border-left: 2px solid #99C2FF;
+            border-radius: 16px;
+            padding: 15px;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #99C2FF;
+            border-radius: 10px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# -------------------------------
+# HEADER
+# -------------------------------
+st.title("💫 Nuvora — AI Resume & ATS Analyzer")
+st.caption("Developed by Pearl & Vasu | Final Year Project | Smart Resume + Career Assistant")
+
+# -------------------------------
+# HELPER FUNCTIONS
 # -------------------------------
 def extract_text_from_pdf(file):
     text = ""
     try:
-        pdf_reader = PdfReader(file)
+        pdf_reader = PyPDF2.PdfReader(file)
         for page in pdf_reader.pages:
             text += page.extract_text() or ""
     except Exception:
-        pass
+        text = ""
     return text.lower()
 
-def extract_skills(text):
-    skills = [
-        "python", "java", "sql", "html", "css", "javascript", "react", "node", "pandas", "numpy",
-        "power bi", "tableau", "excel", "machine learning", "deep learning", "nlp", "flask", "django",
-        "data analysis", "data visualization", "communication", "leadership", "teamwork"
-    ]
-    found = []
-    for skill in skills:
-        if re.search(rf"\\b{skill}\\b", text, re.IGNORECASE):
-            found.append(skill.title())
-        elif fuzz.partial_ratio(skill.lower(), text) > 85:
-            found.append(skill.title())
-    return sorted(list(set(found)))
-
 def calculate_similarity(jd_text, resume_text):
-    documents = [jd_text, resume_text]
-    vectorizer = TfidfVectorizer(stop_words="english")
-    tfidf_matrix = vectorizer.fit_transform(documents)
-    sim = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
-    return round(sim * 100, 2)
+    try:
+        docs = [jd_text, resume_text]
+        vectorizer = TfidfVectorizer(stop_words='english')
+        tfidf = vectorizer.fit_transform(docs)
+        similarity = cosine_similarity(tfidf[0:1], tfidf[1:2])[0][0]
+        return round(similarity * 100, 2)
+    except Exception:
+        return 0.0
 
-def ats_score(jd, resume):
-    jd = jd.lower()
-    resume = resume.lower()
-    skills_jd = extract_skills(jd)
-    skills_resume = extract_skills(resume)
-    matched = [s for s in skills_resume if s.lower() in [x.lower() for x in skills_jd]]
-    skill_match = (len(matched) / len(skills_jd) * 100) if skills_jd else 0
-    sim = calculate_similarity(jd, resume)
-    overall = round(0.6 * sim + 0.4 * skill_match, 2)
-    return overall, skill_match, matched, skills_resume
+def extract_skills(text):
+    skill_set = [
+        "python", "java", "c++", "html", "css", "javascript", "sql", "mongodb", "react", "node",
+        "machine learning", "deep learning", "nlp", "data analysis", "data visualization",
+        "power bi", "tableau", "excel", "pandas", "numpy", "matplotlib", "seaborn", "tensorflow",
+        "keras", "communication", "leadership", "problem solving", "teamwork", "critical thinking",
+        "data science", "flask", "django", "git", "github"
+    ]
+    found_skills = [skill.title() for skill in skill_set if re.search(rf"\\b{skill}\\b", text, re.IGNORECASE)]
+    return list(set(found_skills))
 
 # -------------------------------
-# INPUTS
+# MAIN DASHBOARD
 # -------------------------------
-st.markdown("<div class='card'>", unsafe_allow_html=True)
-col1, col2 = st.columns([2, 1])
+col1, col2 = st.columns([2, 1], gap="large")
 
+# --- LEFT: ATS ANALYZER ---
 with col1:
-    job_description = st.text_area("📄 Paste Job Description", height=200,
-                                   placeholder="Example: Looking for Data Analyst with Python, SQL, Power BI...")
-with col2:
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.header("📊 Resume ATS Analysis")
+
+    job_description = st.text_area("📄 Paste Job Description", height=180)
     uploaded_files = st.file_uploader("📂 Upload Resume PDFs", type=["pdf"], accept_multiple_files=True)
-st.markdown("</div>", unsafe_allow_html=True)
 
-# -------------------------------
-# ANALYSIS
-# -------------------------------
-if st.button("🚀 Analyze Resumes"):
-    if not job_description:
-        st.warning("Please enter a job description first.")
-    elif not uploaded_files:
-        st.warning("Please upload at least one resume.")
-    else:
-        st.info("Analyzing resumes... please wait.")
-        results = []
+    if st.button("🚀 Analyze Resumes"):
+        if not job_description:
+            st.warning("⚠️ Please enter a Job Description first.")
+        elif not uploaded_files:
+            st.warning("⚠️ Please upload at least one resume.")
+        else:
+            st.info("⏳ Analyzing resumes... please wait...")
+            jd_text = job_description.lower()
+            results = []
 
-        for file in uploaded_files:
-            text = extract_text_from_pdf(file)
-            if not text.strip():
-                st.error(f"❌ Could not read {file.name}. Try a text-based PDF.")
-                continue
-            overall, skill_match, matched, all_skills = ats_score(job_description, text)
-            results.append({
-                "Resume": file.name,
-                "ATS %": overall,
-                "Skill Match %": round(skill_match, 2),
-                "Matched Skills": ", ".join(matched) if matched else "None",
-                "Skills Found": ", ".join(all_skills)
-            })
+            for file in uploaded_files:
+                resume_text = extract_text_from_pdf(file)
+                similarity = calculate_similarity(jd_text, resume_text)
+                skills_found = extract_skills(resume_text)
+                results.append({
+                    "name": file.name,
+                    "match": similarity,
+                    "skills": ", ".join(skills_found) if skills_found else "No skills detected"
+                })
 
-        if results:
-            df = pd.DataFrame(results).sort_values(by="ATS %", ascending=False)
-            st.success("✅ Analysis complete!")
-            st.dataframe(df, use_container_width=True)
-            st.bar_chart(df.set_index("Resume")["ATS %"])
-            st.session_state["results"] = df
+            results = sorted(results, key=lambda x: x["match"], reverse=True)
+            st.success("✅ Nuvora Analysis Complete!")
 
-# -------------------------------
-# CHATBOT SECTION
-# -------------------------------
-st.markdown("<div class='card'>", unsafe_allow_html=True)
-st.subheader("💬 Ask Nuvora — AI Career Assistant")
+            df_results = pd.DataFrame(results)
+            st.dataframe(df_results, use_container_width=True)
 
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
+            # Bar Chart
+            names = [r["name"] for r in results]
+            scores = [r["match"] for r in results]
 
-for msg in st.session_state.chat_history:
-    if msg["role"] == "user":
-        st.markdown(f"<div class='chat-user'>{msg['content']}</div>", unsafe_allow_html=True)
-    else:
-        st.markdown(f"<div class='chat-bot'>{msg['content']}</div>", unsafe_allow_html=True)
-    st.markdown("<div style='clear:both'></div>", unsafe_allow_html=True)
+            fig, ax = plt.subplots()
+            ax.barh(names, scores, color="#0078FF")
+            ax.set_xlabel("Match %")
+            ax.set_ylabel("Resume")
+            ax.set_title("Resume Match Percentage")
+            plt.gca().invert_yaxis()
+            st.pyplot(fig)
 
-user_input = st.chat_input("Ask something about your resume, ATS score, or job prep...")
+            best = results[0]
+            st.markdown(f"### 🥇 Top Match: **{best['name']}** — {best['match']}%")
+            st.markdown(f"**🧠 Skills Mentioned:** {best['skills']}")
+            st.balloons()
 
-if user_input:
-    st.session_state.chat_history.append({"role": "user", "content": user_input})
-    answer = ""
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    if client:
+# --- RIGHT: AI CHAT ASSISTANT ---
+with col2:
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.subheader("💬 Ask Nuvora — AI Career Assistant")
+
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = [
+            {"role": "bot", "content": "👋 Hi! I'm Nuvora, your AI career assistant. Ask about resumes, ATS, or interviews."}
+        ]
+
+    for msg in st.session_state.chat_history:
+        if msg["role"] == "user":
+            st.markdown(f"<div class='chat-user'>{msg['content']}</div>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<div class='chat-bot'>{msg['content']}</div>", unsafe_allow_html=True)
+        st.markdown("<div style='clear:both;'></div>", unsafe_allow_html=True)
+
+    user_input = st.chat_input("Ask something about your resume or job interview...")
+
+    if user_input:
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
+        answer = ""
+
         try:
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are Nuvora, an AI career assistant giving professional resume and job advice."},
-                    {"role": "user", "content": user_input}
-                ],
-                max_tokens=400,
-                temperature=0.5
-            )
-            answer = response.choices[0].message.content.strip()
+            if client:
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "You are Nuvora, a smart career assistant giving detailed professional resume and ATS advice."},
+                        *st.session_state.chat_history
+                    ],
+                    max_tokens=400,
+                    temperature=0.5
+                )
+                answer = response.choices[0].message.content.strip()
+            else:
+                answer = "⚠️ AI unavailable. Please set your OpenAI API key in Streamlit Secrets."
         except Exception:
-            answer = "⚠️ AI response temporarily unavailable. Please try again later."
-    else:
-        # Offline fallback
-        answer = "I can give you career tips! Try asking about resume improvement or interview preparation."
+            answer = "⚠️ Connection issue. Try again later."
 
-    st.session_state.chat_history.append({"role": "bot", "content": answer})
-    st.experimental_rerun()
+        st.session_state.chat_history.append({"role": "bot", "content": answer})
+        st.rerun()
 
-st.markdown("</div>", unsafe_allow_html=True)
-
-st.markdown("<hr>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; color:#005FCC;'>💼 Developed by Pearl | Nuvora Final Year Project</p>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
