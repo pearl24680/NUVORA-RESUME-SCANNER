@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import google.generativeai as genai
 import pdfplumber
@@ -14,21 +13,20 @@ st.set_page_config(
 )
 
 # --- Custom CSS ---
-page_bg = """
+st.markdown("""
 <style>
 body { background-color: #E6F0FF; color: #000000; font-family: 'Segoe UI', sans-serif; }
 div[data-testid="stChatMessage"] { background: white; border-radius: 12px; padding: 15px; margin: 10px 0; box-shadow: 0px 2px 5px rgba(0,0,0,0.1); }
 .stChatMessage[data-testid="stChatMessage-user"] { background-color: #D6EAF8; }
 h1, h2, h3 { color: #004080; }
 </style>
-"""
-st.markdown(page_bg, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # ================================
 # ⚙️ Gemini API Setup
 # ================================
 if "GEMINI_API_KEY" not in st.secrets:
-    st.error("⚠️ Gemini API key not found! Please add it to your Streamlit Secrets.")
+    st.error("⚠️ Gemini API key not found! Add it in Streamlit Secrets.")
     st.stop()
 
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
@@ -133,7 +131,7 @@ if user_input:
     try:
         response = model.generate_content(user_input)
         ai_reply = response.text
-    except Exception as e:
+    except Exception:
         ai_reply = "⚠️ Sorry, I'm having trouble connecting to Gemini right now."
     
     st.session_state.chat_history.append({"role": "assistant", "content": ai_reply})
