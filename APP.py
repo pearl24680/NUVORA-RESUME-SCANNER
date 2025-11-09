@@ -22,7 +22,7 @@ body { background-color: #E6F0FF; }
 }
 h1, h2, h3 { color: #0056b3; }
 .chat-bubble {
-    background-color: white;
+    background-color: black;
     border-radius: 18px;
     padding: 1em 1.2em;
     margin-bottom: 0.8em;
