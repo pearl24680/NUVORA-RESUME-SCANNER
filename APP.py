@@ -177,5 +177,5 @@ if user_input:
 st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<hr>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; color:#005FCC;'>💼 Developed by Pearl & Vasu | Nuvora Final Year Project</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#005FCC;'>💼 Developed by Pearl | Nuvora Final Year Project</p>", unsafe_allow_html=True)
 
