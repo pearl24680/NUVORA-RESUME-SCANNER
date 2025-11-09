@@ -1,7 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
 import pdfplumber
-import io
 import re
 
 # ================================
@@ -9,7 +8,7 @@ import re
 # ================================
 st.set_page_config(page_title="Nuvora AI - Resume & Career Assistant", page_icon="💼", layout="wide")
 
-# Sky blue background and elegant font
+# --- Custom CSS ---
 page_bg = """
 <style>
 body {
@@ -134,7 +133,7 @@ for chat in st.session_state.chat_history:
     with st.chat_message(chat["role"]):
         st.markdown(chat["content"])
 
-# User input box
+# User input
 user_input = st.chat_input("Ask about your resume, projects, or interview tips...")
 
 if user_input:
@@ -158,3 +157,4 @@ if user_input:
 if st.button("🧹 Clear Chat"):
     st.session_state.chat_history = []
     st.experimental_rerun()
+
