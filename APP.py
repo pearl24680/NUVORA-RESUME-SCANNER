@@ -104,7 +104,7 @@ def extract_skills(text):
 # HEADER
 # -----------------------------------
 st.title("💫 Nuvora AI Chat — Resume Screening Assistant")
-st.caption("Developed by Pearl & Vasu | Final Year Project | Powered by BERT Embeddings")
+st.caption("Developed by Pearl & Vasu | Final Year Project ")
 
 # -----------------------------------
 # INPUT AREA
