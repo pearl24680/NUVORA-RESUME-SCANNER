@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from sentence_transformers import SentenceTransformer, util
 import nltk
 nltk.download('punkt')
-
 # -------------------------------------------------
 # PAGE CONFIGURATION
 # -------------------------------------------------
