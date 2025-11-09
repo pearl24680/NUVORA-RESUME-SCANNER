@@ -1,52 +1,157 @@
-elif choice == "🤖 Ask Nuvora (AI Chat)":
-    st.title("💬 Ask Nuvora — Your Career AI Assistant")
+import streamlit as st
+import openai
+import pdfplumber
+import docx
+import re
 
+# --------------------------------------------------
+# APP CONFIGURATION
+# --------------------------------------------------
+st.set_page_config(page_title="Nuvora AI Career Assistant", layout="wide")
+
+# Sky Blue Background CSS
+st.markdown("""
+    <style>
+    body {
+        background-color: #e6f2ff;
+    }
+    .main {
+        background-color: #e6f2ff;
+    }
+    div[data-testid="stSidebar"] {
+        background-color: #b3daff;
+    }
+    .chat-container {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    }
+    .user-msg {
+        background: #d9f2d9;
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin: 6px 0;
+    }
+    .bot-msg {
+        background: #cce0ff;
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin: 6px 0;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# --------------------------------------------------
+# LOAD OPENAI API KEY FROM STREAMLIT SECRETS
+# --------------------------------------------------
+try:
+    openai.api_key = st.secrets["openai"]["api_key"]
+    ai_available = True
+except Exception:
+    ai_available = False
+
+# --------------------------------------------------
+# FUNCTION TO EXTRACT TEXT FROM RESUME
+# --------------------------------------------------
+def extract_text_from_resume(uploaded_file):
+    text = ""
+    if uploaded_file.name.endswith(".pdf"):
+        with pdfplumber.open(uploaded_file) as pdf:
+            for page in pdf.pages:
+                text += page.extract_text() or ""
+    elif uploaded_file.name.endswith(".docx"):
+        doc = docx.Document(uploaded_file)
+        for para in doc.paragraphs:
+            text += para.text + "\n"
+    return text
+
+# --------------------------------------------------
+# FUNCTION TO PERFORM ATS ANALYSIS
+# --------------------------------------------------
+def analyze_resume_for_ats(text):
+    score = 0
+    keywords = ["python", "data", "machine learning", "ai", "sql", "excel", "communication", "team", "project"]
+    found = [kw for kw in keywords if kw.lower() in text.lower()]
+    score = int((len(found) / len(keywords)) * 100)
+    missing = [kw for kw in keywords if kw not in found]
+    return score, found, missing
+
+# --------------------------------------------------
+# FUNCTION TO EXTRACT PROJECTS
+# --------------------------------------------------
+def extract_projects_from_resume(text):
+    project_patterns = [
+        r'(?i)(projects?|academic projects?|personal projects?|internship projects?|major projects?|minor projects?)[:\-]?\s*(.*)',
+        r'(?i)(\b[A-Z][a-z]+ Project\b.*?)\n',
+        r'(?i)(?:\*\*|##|###)?\s*Project\s*[:\-]?\s*(.*)'
+    ]
+
+    matches = []
+    for pattern in project_patterns:
+        found = re.findall(pattern, text)
+        if found:
+            for f in found:
+                if isinstance(f, tuple):
+                    matches.append(f[1])
+                else:
+                    matches.append(f)
+    return list(set(matches))
+
+# --------------------------------------------------
+# SIDEBAR MENU
+# --------------------------------------------------
+st.sidebar.title("🧭 Navigation")
+menu = ["🏠 Home", "📊 ATS Resume Analysis", "💼 Resume Project Extraction", "🤖 Ask Nuvora (AI Chat)"]
+choice = st.sidebar.radio("Go to:", menu)
+
+# --------------------------------------------------
+# HOME PAGE
+# --------------------------------------------------
+if choice == "🏠 Home":
+    st.title("💎 Nuvora AI Career Assistant")
     st.markdown("""
-    👋 **Hi! I'm Nuvora**, your AI career assistant.  
-    Ask about resumes, ATS score improvement, interview prep, or project suggestions!
+        Welcome to **Nuvora**, your smart AI-powered career companion.  
+        Analyze your resume, check ATS compatibility, extract project info,  
+        and chat with our AI assistant for career insights.
     """)
 
-    if "OPENAI_API_KEY" not in st.secrets:
-        st.error("⚠️ AI unavailable. Please set your OpenAI API key in Streamlit Secrets.")
-        st.stop()
+# --------------------------------------------------
+# ATS ANALYSIS
+# --------------------------------------------------
+elif choice == "📊 ATS Resume Analysis":
+    st.title("📄 ATS Resume Analyzer")
 
-    openai_api_key = st.secrets["OPENAI_API_KEY"]
+    uploaded_file = st.file_uploader("Upload your resume (PDF/DOCX)", type=["pdf", "docx"])
+    if uploaded_file:
+        text = extract_text_from_resume(uploaded_file)
+        score, found, missing = analyze_resume_for_ats(text)
 
-    # Initialize chat history
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
+        st.subheader("✅ ATS Match Report")
+        st.metric("ATS Score", f"{score}%")
 
-    # Chat display
-    for msg in st.session_state.chat_history:
-        if msg["role"] == "user":
-            st.markdown(f"<div style='background-color:#F1F1F1;padding:10px;border-radius:10px;margin:5px 0;text-align:right'><b>👤 You:</b> {msg['content']}</div>", unsafe_allow_html=True)
+        st.write("**Matched Keywords:**")
+        st.success(", ".join(found) if found else "None")
+
+        st.write("**Missing Keywords:**")
+        st.warning(", ".join(missing) if missing else "None")
+
+# --------------------------------------------------
+# PROJECT EXTRACTION
+# --------------------------------------------------
+elif choice == "💼 Resume Project Extraction":
+    st.title("💼 Resume Project Extraction")
+
+    uploaded_file = st.file_uploader("Upload your resume (PDF/DOCX)", type=["pdf", "docx"])
+    if uploaded_file:
+        text = extract_text_from_resume(uploaded_file)
+        projects = extract_projects_from_resume(text)
+
+        if projects:
+            st.subheader("📁 Detected Projects")
+            for i, project in enumerate(projects, 1):
+                st.markdown(f"**{i}. {project.strip()}**")
         else:
-            st.markdown(f"<div style='background-color:#E6F0FF;padding:10px;border-radius:10px;margin:5px 0'><b>🤖 Nuvora:</b> {msg['content']}</div>", unsafe_allow_html=True)
+            st.warning("⚠️ No clear projects detected. Try checking your resume formatting or section titles.")
 
-    # Input box
-    user_input = st.chat_input("Ask Nuvora anything...")
-
-    if user_input:
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
-        try:
-            from openai import OpenAI
-            client = OpenAI(api_key=openai_api_key)
-
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are Nuvora, a friendly AI career assistant who helps with resumes, job prep, ATS optimization, and interview questions."},
-                    *st.session_state.chat_history
-                ]
-            )
-
-            ai_reply = response.choices[0].message.content
-            st.session_state.chat_history.append({"role": "assistant", "content": ai_reply})
-            st.rerun()
-
-        except Exception as e:
-            st.error(f"⚠️ Error: {e}")
-
-    if st.button("🧹 Clear Chat"):
-        st.session_state.chat_history = []
-        st.rerun()
+# --------------------------------------------------
