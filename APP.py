@@ -156,39 +156,53 @@ elif choice == "💼 Resume Project Extraction":
 
 # --------------------------------------------------
 # --------------------------------------------------
-
-# -----------------🤖 Ask Nuvora (Local Chatbot Demo)-----------------
+# -----------------🤖 Ask Nuvora (Smart Local Chatbot)-----------------
 elif choice == "🤖 Ask Nuvora (AI Chat)":
-    st.title("🤖 Ask Nuvora (Demo Chatbot)")
+    st.title("🤖 Ask Nuvora")
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
     user_input = st.text_input("Ask your career questions or advice here:")
 
-    if st.button("Send"):
-        if user_input:
-            # Append user message to chat history
-            st.session_state.chat_history.append({"role": "user", "content": user_input})
+    if st.button("Send") and user_input.strip():
+        # Append user message
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
 
-            # Generate a simple local response
-            response = ""
-            text_lower = user_input.lower()
-            if "resume" in text_lower:
-                response = "I can help you analyze your resume for ATS compatibility and projects!"
-            elif "job" in text_lower or "career" in text_lower:
-                response = "Focus on building your skills and networking. Tailor your resume for each application."
-            elif "python" in text_lower:
-                response = "Python is great! Make sure to showcase projects using Python on your resume."
-            else:
-                response = "Interesting! Tell me more or ask about resume, skills, or career advice."
+        # Convert to lowercase for keyword matching
+        text_lower = user_input.lower()
 
-            # Append bot response
-            st.session_state.chat_history.append({"role": "assistant", "content": response})
+        # --- Smart response logic ---
+        if "resume" in text_lower:
+            response = "I can help you analyze your resume for ATS compatibility, skills, and projects!"
+        elif "job" in text_lower or "career" in text_lower:
+            response = "Focus on building your skills and networking. Tailor your resume for each application."
+        elif "python" in text_lower:
+            response = "Python is a must-have skill! Make sure to showcase projects using Python on your resume."
+        elif "sql" in text_lower:
+            response = "SQL is essential for data roles. Include any projects or queries you have worked on."
+        elif "excel" in text_lower or "power bi" in text_lower or "tableau" in text_lower:
+            response = "Highlight your data visualization and spreadsheet skills. These are very important for analyst roles."
+        elif "data analyst" in text_lower:
+            response = "For a Data Analyst role, emphasize Python, SQL, Excel, data visualization, and analytics projects."
+        elif "machine learning" in text_lower or "ml" in text_lower:
+            response = "Showcase your ML projects and understanding of algorithms like regression, classification, and clustering."
+        elif "ai" in text_lower or "artificial intelligence" in text_lower:
+            response = "Include your AI projects, understanding of neural networks, NLP, or computer vision if applicable."
+        elif "skills" in text_lower:
+            response = "Make a clear skills section in your resume with programming, analytics, and soft skills."
+        elif "project" in text_lower:
+            response = "Describe your projects clearly, mention technologies used, and the impact or results."
+        else:
+            response = "Interesting! Tell me more or ask about resume, skills, or career advice."
 
-    # Display chat
+        # Append bot response
+        st.session_state.chat_history.append({"role": "assistant", "content": response})
+
+    # --- Display chat history ---
     for chat in st.session_state.chat_history:
         if chat["role"] == "user":
             st.markdown(f'<div class="user-msg">{chat["content"]}</div>', unsafe_allow_html=True)
         else:
             st.markdown(f'<div class="bot-msg">{chat["content"]}</div>', unsafe_allow_html=True)
+
