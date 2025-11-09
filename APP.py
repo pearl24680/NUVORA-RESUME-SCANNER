@@ -3,6 +3,7 @@ import openai
 import pdfplumber
 import docx
 import re
+st.sidebar.write("🔑 OpenAI Key Loaded:", "✅ Yes" if "OPENAI_API_KEY" in st.secrets else "❌ No")
 
 # --------------------------------------------------
 # APP CONFIGURATION
