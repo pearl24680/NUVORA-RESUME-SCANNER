@@ -18,7 +18,7 @@ st.set_page_config(page_title="Nuvora AI — Resume Scanner", page_icon="💫", 
 
 # Load OpenAI client (from secrets in Streamlit)
 client = None
-if "OPENAI_API_KEY" in os.environ:
+if "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" in os.environ:
     try:
         client = OpenAI(api_key=os.getenv("sk-proj-vbeoadVOCR05oDvkvj7oRUkQT0aYa-xM0bexJjeX7TP1yf2f4Q-8HEYv9Ubk83f9hy1O8mhLrnT3BlbkFJn4SjBKHWWvK4rF1v-1PcPe2Aneri0axlSfWLVCq8Kvm5tWPxkvD94kxZ12EmaglqS8c0kKfU0"))
     except Exception:
