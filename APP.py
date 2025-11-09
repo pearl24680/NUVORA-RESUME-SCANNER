@@ -55,7 +55,7 @@ st.markdown("""
 # HEADER
 # -------------------------------
 st.title("💫 Nuvora — AI Resume Screening System")
-st.caption("Developed by Pearl Sethi | Final Year Project")
+st.caption("Developed by Pearl and vasu | Final Year Project")
 
 # -------------------------------
 # SIDEBAR INFO
