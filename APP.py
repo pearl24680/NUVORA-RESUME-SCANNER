@@ -1,79 +1,71 @@
 import streamlit as st
 from PyPDF2 import PdfReader
-import re
+import re, time
+import openai
 
-# ==================== PAGE CONFIG ====================
-st.set_page_config(page_title="Nuvora AI Career Assistant", layout="centered")
+# ==================== CONFIG ====================
+st.set_page_config(page_title="Nuvora AI Career Assistant", layout="wide")
 
-# ==================== CUSTOM CSS ====================
+# Add your API key here or in Streamlit Secrets
+openai.api_key = st.secrets.get("OPENAI_API_KEY", "your-api-key-here")
+
+# ==================== CUSTOM STYLING ====================
 st.markdown("""
     <style>
     body {
-        background: linear-gradient(to bottom right, #E3F2FD, #BBDEFB);
+        background: linear-gradient(to bottom right, #E3F2FD, #FFFFFF);
         font-family: 'Poppins', sans-serif;
     }
     .title {
-        font-size: 38px;
+        font-size: 42px;
         font-weight: 800;
         color: #0D47A1;
         text-align: center;
-        margin-bottom: 5px;
     }
     .subtitle {
-        font-size: 16px;
-        color: #1A237E;
+        font-size: 18px;
         text-align: center;
-        margin-bottom: 30px;
+        color: #1565C0;
+        margin-bottom: 40px;
     }
     .section-header {
         font-size: 22px;
+        color: #0D47A1;
         font-weight: 700;
-        color: #0D47A1;
-        margin-top: 30px;
+        margin-top: 25px;
     }
-    .upload-box {
-        border: 2px dashed #2196F3;
+    .card {
+        background-color: #FFFFFF;
         border-radius: 15px;
-        padding: 15px;
-        background-color: #E3F2FD;
-        text-align: center;
-        color: #0D47A1;
-        font-weight: 500;
+        padding: 20px;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+        margin-bottom: 25px;
     }
     .chat-box {
-        border-radius: 15px;
-        background-color: #FFFFFF;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        padding: 15px;
-        margin-top: 15px;
-        height: 300px;
+        height: 350px;
         overflow-y: auto;
-    }
-    .chat-input {
-        margin-top: 10px;
-        border-radius: 20px;
-        border: 1px solid #90CAF9;
-    }
-    .footer {
-        text-align: center;
-        font-size: 14px;
-        color: #1565C0;
-        margin-top: 40px;
+        background: #FAFAFA;
+        border-radius: 15px;
+        padding: 15px;
+        border: 1px solid #BBDEFB;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # ==================== HEADER ====================
 st.markdown('<h1 class="title">💼 Nuvora AI Career Assistant</h1>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Chat with your AI Career Coach & Resume Analyzer</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Your Smart ATS Resume Analyzer + AI Career Coach</p>', unsafe_allow_html=True)
 
-# ==================== SECTION 1 - RESUME MATCH & SKILLS ====================
-st.markdown('<h3 class="section-header">📊 Resume Match & Skill Analysis</h3>', unsafe_allow_html=True)
+# ==================== RESUME ANALYSIS SECTION ====================
+st.markdown('<h3 class="section-header">📊 Resume & ATS Match Analysis</h3>', unsafe_allow_html=True)
 
-job_desc = st.text_area("📄 Paste Job Description", placeholder="Paste the job description here...", height=150)
+col1, col2 = st.columns(2)
+with col1:
+    job_desc = st.text_area("📄 Paste Job Description", placeholder="Paste the job description here...", height=180)
+with col2:
+    resume_file = st.file_uploader("📂 Upload Resume (PDF)", type=["pdf"])
 
-uploaded_files = st.file_uploader("📂 Upload Resume PDFs", type=["pdf"], accept_multiple_files=True)
-
+# ========== FUNCTIONS ==========
 def extract_text_from_pdf(file):
     pdf_reader = PdfReader(file)
     text = ""
@@ -82,50 +74,78 @@ def extract_text_from_pdf(file):
     return text
 
 def extract_skills(text):
-    common_skills = ['python', 'java', 'c++', 'sql', 'excel', 'machine learning', 'deep learning', 'nlp',
-                     'power bi', 'tableau', 'communication', 'leadership', 'teamwork', 'data analysis']
-    found = [skill for skill in common_skills if re.search(rf'\\b{skill}\\b', text.lower())]
+    skills = ['python','java','c++','sql','excel','machine learning','deep learning','nlp',
+              'power bi','tableau','communication','leadership','teamwork','data analysis',
+              'project management','data visualization','ai','ml','analytics','cloud']
+    found = [s for s in skills if re.search(rf'\\b{s}\\b', text.lower())]
     return list(set(found))
 
-if uploaded_files and job_desc:
-    for file in uploaded_files:
-        st.subheader(f"📘 Analyzing {file.name}...")
-        resume_text = extract_text_from_pdf(file)
+def ats_score(resume_text, job_desc):
+    resume_skills = extract_skills(resume_text)
+    job_skills = extract_skills(job_desc)
+    matched = [s for s in resume_skills if s in job_skills]
+    missing = [s for s in job_skills if s not in resume_skills]
+    score = (len(matched) / len(job_skills)) * 100 if job_skills else 0
+    return score, matched, missing
 
-        resume_skills = extract_skills(resume_text)
-        job_skills = extract_skills(job_desc)
+# ========== ANALYSIS ==========
+if resume_file and job_desc:
+    with st.spinner("🔍 Analyzing your resume..."):
+        resume_text = extract_text_from_pdf(resume_file)
+        score, matched, missing = ats_score(resume_text, job_desc)
+        time.sleep(1)
+        st.success(f"✅ ATS Match Score: {round(score, 2)}%")
+        st.progress(score/100)
+        st.markdown(f"**✔️ Skills Matched:** {', '.join(matched) if matched else 'None'}")
+        st.markdown(f"**⚠️ Missing Skills:** {', '.join(missing) if missing else 'None'}")
 
-        matched = [skill for skill in resume_skills if skill in job_skills]
-        missing = [skill for skill in job_skills if skill not in resume_skills]
+        # Extra checks for ATS format
+        word_count = len(resume_text.split())
+        sections = ['education', 'experience', 'skills', 'projects', 'summary']
+        section_count = sum(1 for sec in sections if sec in resume_text.lower())
+        ats_compatibility = min(100, (score * 0.6) + (section_count * 10) + (min(word_count, 800)/8))
 
-        st.progress(len(matched) / len(job_skills) if job_skills else 0)
+        st.markdown("### 🧾 ATS Compatibility Report")
+        st.info(f"""
+        **Formatting Quality:** {section_count}/5 key sections found  
+        **Word Count:** {word_count} words  
+        **Overall ATS Compatibility:** {round(ats_compatibility, 2)}%
+        """)
 
-        st.success(f"✅ Match Percentage: {round((len(matched)/len(job_skills))*100, 2) if job_skills else 0}%")
-        st.info(f"**Skills Found in Resume:** {', '.join(resume_skills) if resume_skills else 'None'}")
-        st.warning(f"**Skills Missing for this Job:** {', '.join(missing) if missing else 'None'}")
+# ==================== AI CHAT SECTION ====================
+st.markdown('<h3 class="section-header">💬 Chat with Nuvora</h3>', unsafe_allow_html=True)
 
-# ==================== SECTION 2 - AI CHAT BOT ====================
-st.markdown('<h3 class="section-header">💬 Ask Nuvora Anything</h3>', unsafe_allow_html=True)
+if "chat" not in st.session_state:
+    st.session_state.chat = []
 
-# Chat box placeholder
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-
+# Display chat history
 chat_container = st.container()
 with chat_container:
     st.markdown('<div class="chat-box">', unsafe_allow_html=True)
-    for msg in st.session_state.chat_history:
-        st.markdown(f"<b>{msg['sender']}:</b> {msg['text']}", unsafe_allow_html=True)
+    for msg in st.session_state.chat:
+        sender = "🧑‍💼 You" if msg["sender"] == "user" else "🤖 Nuvora"
+        color = "#0D47A1" if msg["sender"] == "bot" else "#1A237E"
+        st.markdown(f"<p style='color:{color}'><b>{sender}:</b> {msg['text']}</p>", unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-user_input = st.chat_input("Ask Nuvora about your career, skills, or resume...")
+user_message = st.chat_input("Ask Nuvora about your resume, career or interview prep...")
 
-if user_input:
-    # Simple mock response (can be replaced with OpenAI API call)
-    response = f"Based on your resume, you should focus on enhancing your {', '.join(extract_skills(user_input)) or 'key technical'} skills."
-    st.session_state.chat_history.append({"sender": "You", "text": user_input})
-    st.session_state.chat_history.append({"sender": "Nuvora", "text": response})
+if user_message:
+    st.session_state.chat.append({"sender": "user", "text": user_message})
+    with st.spinner("Nuvora is thinking..."):
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4-turbo",
+                messages=[
+                    {"role": "system", "content": "You are Nuvora, an expert AI career coach and resume evaluator."},
+                    {"role": "user", "content": user_message}
+                ]
+            )
+            reply = response["choices"][0]["message"]["content"]
+        except Exception as e:
+            reply = "⚠️ (Simulated Response) Please configure OpenAI API key to enable real AI chat."
+    st.session_state.chat.append({"sender": "bot", "text": reply})
     st.rerun()
 
-# ==================== FOOTER ====================
-st.markdown('<p class="footer">🚀 Powered by Nuvora AI | Smart Career Insights</p>', unsafe_allow_html=True)
+st.markdown("<br><hr><p style='text-align:center;color:#0D47A1;'>🚀 Powered by Nuvora AI | Smart ATS + Career Insights</p>", unsafe_allow_html=True)
+
