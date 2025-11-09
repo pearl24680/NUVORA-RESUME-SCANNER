@@ -155,3 +155,40 @@ elif choice == "💼 Resume Project Extraction":
             st.warning("⚠️ No clear projects detected. Try checking your resume formatting or section titles.")
 
 # --------------------------------------------------
+# --------------------------------------------------🤖 Ask Nuvora (AI Chat)
+elif choice == "🤖 Ask Nuvora (AI Chat)":
+    st.title("🤖 Ask Nuvora")
+
+    if not ai_available:
+        st.warning("⚠️ OpenAI API key not found. Chat feature is disabled.")
+    else:
+        if "chat_history" not in st.session_state:
+            st.session_state.chat_history = []
+
+        user_input = st.text_input("Ask your career questions or advice here:")
+
+        if st.button("Send"):
+            if user_input:
+                # Append user message to chat history
+                st.session_state.chat_history.append({"role": "user", "content": user_input})
+
+                # Call OpenAI API
+                try:
+                    response = openai.ChatCompletion.create(
+                        model="gpt-4",
+                        messages=st.session_state.chat_history,
+                        temperature=0.7,
+                        max_tokens=500
+                    )
+
+                    bot_message = response['choices'][0]['message']['content']
+                    st.session_state.chat_history.append({"role": "assistant", "content": bot_message})
+                except Exception as e:
+                    st.error(f"❌ API Error: {e}")
+
+        # Display chat
+        for chat in st.session_state.chat_history:
+            if chat["role"] == "user":
+                st.markdown(f'<div class="user-msg">{chat["content"]}</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="bot-msg">{chat["content"]}</div>', unsafe_allow_html=True)
