@@ -1,5 +1,4 @@
 import streamlit as st
-import openai
 import pdfplumber
 import docx
 import re
@@ -43,15 +42,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------
-# LOAD OPENAI API KEY FROM STREAMLIT SECRETS
-# --------------------------------------------------
-try:
-    openai.api_key = st.secrets["openai"]["api_key"]
-    ai_available = True
-except Exception:
-    ai_available = False
-
-# --------------------------------------------------
 # FUNCTION TO EXTRACT TEXT FROM RESUME
 # --------------------------------------------------
 def extract_text_from_resume(uploaded_file):
@@ -70,7 +60,6 @@ def extract_text_from_resume(uploaded_file):
 # FUNCTION TO PERFORM ATS ANALYSIS
 # --------------------------------------------------
 def analyze_resume_for_ats(text):
-    score = 0
     keywords = ["python", "data", "machine learning", "ai", "sql", "excel", "communication", "team", "project"]
     found = [kw for kw in keywords if kw.lower() in text.lower()]
     score = int((len(found) / len(keywords)) * 100)
@@ -155,8 +144,8 @@ elif choice == "💼 Resume Project Extraction":
             st.warning("⚠️ No clear projects detected. Try checking your resume formatting or section titles.")
 
 # --------------------------------------------------
+# SMART LOCAL CHATBOT
 # --------------------------------------------------
-# -----------------🤖 Ask Nuvora (Smart Local Chatbot)-----------------
 elif choice == "🤖 Ask Nuvora (AI Chat)":
     st.title("🤖 Ask Nuvora")
 
@@ -205,4 +194,5 @@ elif choice == "🤖 Ask Nuvora (AI Chat)":
             st.markdown(f'<div class="user-msg">{chat["content"]}</div>', unsafe_allow_html=True)
         else:
             st.markdown(f'<div class="bot-msg">{chat["content"]}</div>', unsafe_allow_html=True)
+
 
