@@ -32,7 +32,7 @@ st.markdown("<div class='subtitle'>Upload resumes, analyze ATS score, and chat w
 # -------------------------------
 # SECURE API SETUP
 # -------------------------------
-api_key = os.getenv("OPENAI_API_KEY")
+api_key = os.getenv("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")
 client = None
 if api_key:
     try:
