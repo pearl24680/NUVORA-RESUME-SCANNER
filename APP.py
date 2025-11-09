@@ -1,178 +1,160 @@
 import streamlit as st
-import openai
-import pdfplumber
-import docx
-import re
-st.sidebar.write("🔑 OpenAI Key Loaded:", "✅ Yes" if "OPENAI_API_KEY" in st.secrets else "❌ No")
-
-# --------------------------------------------------
-# APP CONFIGURATION
-# --------------------------------------------------
-st.set_page_config(page_title="Nuvora AI Career Assistant", layout="wide")
-
-# Sky Blue Background CSS
-st.markdown("""
-    <style>
-    body {
-        background-color: #e6f2ff;
-    }
-    .main {
-        background-color: #e6f2ff;
-    }
-    div[data-testid="stSidebar"] {
-        background-color: #b3daff;
-    }
-    .chat-container {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
-    }
-    .user-msg {
-        background: #d9f2d9;
-        border-radius: 8px;
-        padding: 8px 12px;
-        margin: 6px 0;
-    }
-    .bot-msg {
-        background: #cce0ff;
-        border-radius: 8px;
-        padding: 8px 12px;
-        margin: 6px 0;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# --------------------------------------------------
-# LOAD OPENAI API KEY FROM STREAMLIT SECRETS
-# --------------------------------------------------
-try:
-    openai.api_key = st.secrets["openai"]["api_key"]
-    ai_available = True
-except Exception:
-    ai_available = False
-
-# --------------------------------------------------
-# FUNCTION TO EXTRACT TEXT FROM RESUME
-# --------------------------------------------------
-def extract_text_from_resume(uploaded_file):
-    text = ""
-    if uploaded_file.name.endswith(".pdf"):
-        with pdfplumber.open(uploaded_file) as pdf:
-            for page in pdf.pages:
-                text += page.extract_text() or ""
-    elif uploaded_file.name.endswith(".docx"):
-        doc = docx.Document(uploaded_file)
-        for para in doc.paragraphs:
-            text += para.text + "\n"
-    return text
-
-# --------------------------------------------------
-# FUNCTION TO PERFORM ATS ANALYSIS
-# --------------------------------------------------
-def analyze_resume_for_ats(text):
-    score = 0
-    keywords = ["python", "data", "machine learning", "ai", "sql", "excel", "communication", "team", "project"]
-    found = [kw for kw in keywords if kw.lower() in text.lower()]
-    score = int((len(found) / len(keywords)) * 100)
-    missing = [kw for kw in keywords if kw not in found]
-    return score, found, missing
-
-# --------------------------------------------------
-# FUNCTION TO EXTRACT PROJECTS
-# --------------------------------------------------
-def extract_projects_from_resume(text):
-    project_patterns = [
-        r'(?i)(projects?|academic projects?|personal projects?|internship projects?|major projects?|minor projects?)[:\-]?\s*(.*)',
-        r'(?i)(\b[A-Z][a-z]+ Project\b.*?)\n',
-        r'(?i)(?:\*\*|##|###)?\s*Project\s*[:\-]?\s*(.*)'
-    ]
-
-    matches = []
-    for pattern in project_patterns:
-        found = re.findall(pattern, text)
-        if found:
-            for f in found:
-                if isinstance(f, tuple):
-                    matches.append(f[1])
-                else:
-                    matches.append(f)
-    return list(set(matches))
-
-# --------------------------------------------------
-# SIDEBAR MENU
-# --------------------------------------------------
-st.sidebar.title("🧭 Navigation")
-menu = ["🏠 Home", "📊 ATS Resume Analysis", "💼 Resume Project Extraction", "🤖 Ask Nuvora (AI Chat)"]
-choice = st.sidebar.radio("Go to:", menu)
-
-# --------------------------------------------------
-# HOME PAGE
-# --------------------------------------------------
-if choice == "🏠 Home":
-    st.title("💎 Nuvora AI Career Assistant")
-    st.markdown("""
-        Welcome to **Nuvora**, your smart AI-powered career companion.  
-        Analyze your resume, check ATS compatibility, extract project info,  
-        and chat with our AI assistant for career insights.
-    """)
-
-# --------------------------------------------------
-# ATS ANALYSIS
-# --------------------------------------------------
-elif choice == "📊 ATS Resume Analysis":
-    st.title("📄 ATS Resume Analyzer")
-
-    uploaded_file = st.file_uploader("Upload your resume (PDF/DOCX)", type=["pdf", "docx"])
-    if uploaded_file:
-        text = extract_text_from_resume(uploaded_file)
-        score, found, missing = analyze_resume_for_ats(text)
-
-        st.subheader("✅ ATS Match Report")
-        st.metric("ATS Score", f"{score}%")
-
-        st.write("**Matched Keywords:**")
-        st.success(", ".join(found) if found else "None")
-
-        st.write("**Missing Keywords:**")
-        st.warning(", ".join(missing) if missing else "None")
-
-# --------------------------------------------------
-# PROJECT EXTRACTION
-# --------------------------------------------------
-elif choice == "💼 Resume Project Extraction":
-    st.title("💼 Resume Project Extraction")
-
-    uploaded_file = st.file_uploader("Upload your resume (PDF/DOCX)", type=["pdf", "docx"])
-    if uploaded_file:
-        text = extract_text_from_resume(uploaded_file)
-        projects = extract_projects_from_resume(text)
-
-        if projects:
-            st.subheader("📁 Detected Projects")
-            for i, project in enumerate(projects, 1):
-                st.markdown(f"**{i}. {project.strip()}**")
-        else:
-            st.warning("⚠️ No clear projects detected. Try checking your resume formatting or section titles.")
-
-# --------------------------------------------------
-# CHATBOT SECTION
-# --------------------------------------------------
 import google.generativeai as genai
+import pdfplumber
+import io
+import re
 
+# ================================
+# 🎨 Page Configuration
+# ================================
+st.set_page_config(page_title="Nuvora AI - Resume & Career Assistant", page_icon="💼", layout="wide")
+
+# Sky blue background and elegant font
+page_bg = """
+<style>
+body {
+    background-color: #E6F0FF;
+    color: #000000;
+    font-family: 'Segoe UI', sans-serif;
+}
+div[data-testid="stChatMessage"] {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 10px 0;
+    box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
+}
+.stChatMessage[data-testid="stChatMessage-user"] {
+    background-color: #D6EAF8;
+}
+h1, h2, h3 {
+    color: #004080;
+}
+</style>
+"""
+st.markdown(page_bg, unsafe_allow_html=True)
+
+# ================================
+# ⚙️ Gemini API Setup
+# ================================
 if "GEMINI_API_KEY" not in st.secrets:
-    st.error("⚠️ Gemini key missing. Add GEMINI_API_KEY in Streamlit Secrets.")
+    st.error("⚠️ Gemini API key not found! Please add it to your Streamlit Secrets.")
     st.stop()
 
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-pro")
 
-user_input = st.chat_input("Ask Nuvora anything...")
+# ================================
+# 💬 Chat History
+# ================================
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+# ================================
+# 📄 Resume Extraction
+# ================================
+def extract_text_from_pdf(uploaded_file):
+    text = ""
+    with pdfplumber.open(uploaded_file) as pdf:
+        for page in pdf.pages:
+            text += page.extract_text() or ""
+    return text
+
+def extract_projects(resume_text):
+    project_pattern = r"(?:Projects?|Project Title|Major Project|Minor Project)[:\-–\s]*([\s\S]*?)(?:\n[A-Z][a-zA-Z\s]+:|\Z)"
+    projects = re.findall(project_pattern, resume_text, re.IGNORECASE)
+    return [p.strip() for p in projects if len(p.strip()) > 10]
+
+def ats_analysis(resume_text):
+    prompt = f"""
+You are an ATS (Applicant Tracking System) analyzer.
+Analyze this resume text and give:
+1. Overall ATS score (out of 100)
+2. Strengths
+3. Weaknesses
+4. Suggestions to improve ATS ranking
+Resume:
+{resume_text}
+"""
+    response = model.generate_content(prompt)
+    return response.text
+
+# ================================
+# 🧠 Sidebar - Resume Upload
+# ================================
+st.sidebar.header("📤 Upload Resume")
+uploaded_file = st.sidebar.file_uploader("Upload your resume (PDF)", type=["pdf"])
+
+resume_text = ""
+projects = []
+ats_report = ""
+
+if uploaded_file:
+    resume_text = extract_text_from_pdf(uploaded_file)
+    if resume_text:
+        st.sidebar.success("✅ Resume uploaded successfully!")
+
+        with st.expander("📊 View Extracted Text"):
+            st.text_area("Extracted Resume Text", resume_text[:2000], height=300)
+
+        projects = extract_projects(resume_text)
+        ats_report = ats_analysis(resume_text)
+
+# ================================
+# 🌟 Main UI
+# ================================
+st.title("💼 Nuvora AI — Resume & Career Assistant")
+st.markdown("### Hi! I'm Nuvora, your **AI career guide**. Ask me about your resume, projects, or interviews!")
+
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    if projects:
+        st.subheader("📁 Projects Found in Resume")
+        for i, proj in enumerate(projects, 1):
+            st.markdown(f"**{i}.** {proj}")
+    else:
+        st.info("No projects detected yet. Upload your resume to extract them.")
+
+with col2:
+    if ats_report:
+        st.subheader("📊 ATS Analysis Report")
+        st.markdown(ats_report)
+    else:
+        st.info("Upload a resume to generate ATS insights.")
+
+# ================================
+# 💬 Chat Section
+# ================================
+st.markdown("---")
+st.subheader("💬 Ask Nuvora — AI Career Chatbot")
+
+# Display chat history
+for chat in st.session_state.chat_history:
+    with st.chat_message(chat["role"]):
+        st.markdown(chat["content"])
+
+# User input box
+user_input = st.chat_input("Ask about your resume, projects, or interview tips...")
+
 if user_input:
     st.session_state.chat_history.append({"role": "user", "content": user_input})
-    response = model.generate_content(user_input)
-    ai_reply = response.text
+    with st.chat_message("user"):
+        st.markdown(user_input)
+
+    try:
+        response = model.generate_content(user_input)
+        ai_reply = response.text
+    except Exception as e:
+        ai_reply = "⚠️ Sorry, I'm having trouble connecting to Gemini right now."
+
     st.session_state.chat_history.append({"role": "assistant", "content": ai_reply})
-    st.rerun()
+    with st.chat_message("assistant"):
+        st.markdown(ai_reply)
 
-
+# ================================
+# 🔁 Clear Chat Button
+# ================================
+if st.button("🧹 Clear Chat"):
+    st.session_state.chat_history = []
+    st.experimental_rerun()
