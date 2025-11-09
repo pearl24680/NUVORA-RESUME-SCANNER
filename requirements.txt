@@ -3,6 +3,6 @@ PyPDF2
 pandas
 numpy
 scikit-learn
-fuzzywuzzy
 python-Levenshtein
 openai
+matplotlib
