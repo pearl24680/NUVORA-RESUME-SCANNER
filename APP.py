@@ -191,5 +191,5 @@ elif choice == "🤖 Ask Nuvora (AI Chat)":
             ai_reply = "⚠️ AI unavailable. Please set your OpenAI API key in Streamlit Secrets."
 
         st.session_state.chat_history.append({"role": "assistant", "content": ai_reply})
-        st.experimental_rerun()
+        st.rerun()
 
