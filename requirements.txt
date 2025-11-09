@@ -1,8 +1,5 @@
 streamlit
-PyPDF2
-pandas
-numpy
-scikit-learn
-python-Levenshtein
 openai
-matplotlib
+pdfplumber
+python-docx
+
