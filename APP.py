@@ -21,7 +21,7 @@ st.markdown("""
     .subtitle {font-size: 16px; color: #005FCC; text-align:center; margin-bottom: 20px;}
     .card {background: #ffffff; border-radius: 12px; padding: 18px; 
            box-shadow: 0 6px 20px rgba(0, 40, 100, 0.08);}
-    .chat-user {background:#0078FF; color:white; padding:10px 14px; border-radius:18px; float:right; margin:6px;}
+    .chat-user {background:#0078FF; color:black; padding:10px 14px; border-radius:18px; float:right; margin:6px;}
     .chat-bot {background:#F1F3F4; color:#002B5B; padding:10px 14px; border-radius:18px; float:left; margin:6px;}
     </style>
 """, unsafe_allow_html=True)
