@@ -155,40 +155,40 @@ elif choice == "💼 Resume Project Extraction":
             st.warning("⚠️ No clear projects detected. Try checking your resume formatting or section titles.")
 
 # --------------------------------------------------
-# --------------------------------------------------🤖 Ask Nuvora (AI Chat)
+# --------------------------------------------------
+
+# -----------------🤖 Ask Nuvora (Local Chatbot Demo)-----------------
 elif choice == "🤖 Ask Nuvora (AI Chat)":
-    st.title("🤖 Ask Nuvora")
+    st.title("🤖 Ask Nuvora (Demo Chatbot)")
 
-    if not ai_available:
-        st.warning("⚠️ OpenAI API key not found. Chat feature is disabled.")
-    else:
-        if "chat_history" not in st.session_state:
-            st.session_state.chat_history = []
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
 
-        user_input = st.text_input("Ask your career questions or advice here:")
+    user_input = st.text_input("Ask your career questions or advice here:")
 
-        if st.button("Send"):
-            if user_input:
-                # Append user message to chat history
-                st.session_state.chat_history.append({"role": "user", "content": user_input})
+    if st.button("Send"):
+        if user_input:
+            # Append user message to chat history
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
 
-                # Call OpenAI API
-                try:
-                    response = openai.ChatCompletion.create(
-                        model="gpt-4",
-                        messages=st.session_state.chat_history,
-                        temperature=0.7,
-                        max_tokens=500
-                    )
-
-                    bot_message = response['choices'][0]['message']['content']
-                    st.session_state.chat_history.append({"role": "assistant", "content": bot_message})
-                except Exception as e:
-                    st.error(f"❌ API Error: {e}")
-
-        # Display chat
-        for chat in st.session_state.chat_history:
-            if chat["role"] == "user":
-                st.markdown(f'<div class="user-msg">{chat["content"]}</div>', unsafe_allow_html=True)
+            # Generate a simple local response
+            response = ""
+            text_lower = user_input.lower()
+            if "resume" in text_lower:
+                response = "I can help you analyze your resume for ATS compatibility and projects!"
+            elif "job" in text_lower or "career" in text_lower:
+                response = "Focus on building your skills and networking. Tailor your resume for each application."
+            elif "python" in text_lower:
+                response = "Python is great! Make sure to showcase projects using Python on your resume."
             else:
-                st.markdown(f'<div class="bot-msg">{chat["content"]}</div>', unsafe_allow_html=True)
+                response = "Interesting! Tell me more or ask about resume, skills, or career advice."
+
+            # Append bot response
+            st.session_state.chat_history.append({"role": "assistant", "content": response})
+
+    # Display chat
+    for chat in st.session_state.chat_history:
+        if chat["role"] == "user":
+            st.markdown(f'<div class="user-msg">{chat["content"]}</div>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div class="bot-msg">{chat["content"]}</div>', unsafe_allow_html=True)
