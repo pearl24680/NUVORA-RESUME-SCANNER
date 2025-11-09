@@ -1,31 +1,25 @@
+# app.py
 import streamlit as st
 import google.generativeai as genai
 import pdfplumber
 import re
 
-st.set_page_config(page_title="Nuvora AI - Resume & Career Assistant", page_icon="💼", layout="wide")
+# ================================
+# 🎨 Page Configuration
+# ================================
+st.set_page_config(
+    page_title="Nuvora AI - Resume & Career Assistant",
+    page_icon="💼",
+    layout="wide"
+)
 
 # --- Custom CSS ---
 page_bg = """
 <style>
-body {
-    background-color: #E6F0FF;
-    color: #000000;
-    font-family: 'Segoe UI', sans-serif;
-}
-div[data-testid="stChatMessage"] {
-    background: white;
-    border-radius: 12px;
-    padding: 15px;
-    margin: 10px 0;
-    box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
-}
-.stChatMessage[data-testid="stChatMessage-user"] {
-    background-color: #D6EAF8;
-}
-h1, h2, h3 {
-    color: #004080;
-}
+body { background-color: #E6F0FF; color: #000000; font-family: 'Segoe UI', sans-serif; }
+div[data-testid="stChatMessage"] { background: white; border-radius: 12px; padding: 15px; margin: 10px 0; box-shadow: 0px 2px 5px rgba(0,0,0,0.1); }
+.stChatMessage[data-testid="stChatMessage-user"] { background-color: #D6EAF8; }
+h1, h2, h3 { color: #004080; }
 </style>
 """
 st.markdown(page_bg, unsafe_allow_html=True)
@@ -34,7 +28,7 @@ st.markdown(page_bg, unsafe_allow_html=True)
 # ⚙️ Gemini API Setup
 # ================================
 if "GEMINI_API_KEY" not in st.secrets:
-    st.error("⚠️ Gemini API key not found! Please add it in Streamlit Secrets.")
+    st.error("⚠️ Gemini API key not found! Please add it to your Streamlit Secrets.")
     st.stop()
 
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
@@ -47,7 +41,7 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 # ================================
-# 📄 Resume Extraction
+# 📄 Resume Extraction Functions
 # ================================
 def extract_text_from_pdf(uploaded_file):
     text = ""
@@ -63,15 +57,15 @@ def extract_projects(resume_text):
 
 def ats_analysis(resume_text):
     prompt = f"""
-You are an ATS (Applicant Tracking System) analyzer.
-Analyze this resume text and give:
-1. Overall ATS score (out of 100)
-2. Strengths
-3. Weaknesses
-4. Suggestions to improve ATS ranking
-Resume:
-{resume_text}
-"""
+    You are an ATS (Applicant Tracking System) analyzer. Analyze this resume text and give:
+    1. Overall ATS score (out of 100)
+    2. Strengths
+    3. Weaknesses
+    4. Suggestions to improve ATS ranking
+
+    Resume:
+    {resume_text}
+    """
     response = model.generate_content(prompt)
     return response.text
 
@@ -89,10 +83,8 @@ if uploaded_file:
     resume_text = extract_text_from_pdf(uploaded_file)
     if resume_text:
         st.sidebar.success("✅ Resume uploaded successfully!")
-
-        with st.expander("📊 View Extracted Text"):
+        with st.expander("📄 View Extracted Text"):
             st.text_area("Extracted Resume Text", resume_text[:2000], height=300)
-
         projects = extract_projects(resume_text)
         ats_report = ats_analysis(resume_text)
 
@@ -102,7 +94,7 @@ if uploaded_file:
 st.title("💼 Nuvora AI — Resume & Career Assistant")
 st.markdown("### Hi! I'm Nuvora, your **AI career guide**. Ask me about your resume, projects, or interviews!")
 
-col1, col2 = st.columns([1, 1])
+col1, col2 = st.columns([1,1])
 
 with col1:
     if projects:
@@ -137,13 +129,13 @@ if user_input:
     st.session_state.chat_history.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
-
+    
     try:
         response = model.generate_content(user_input)
         ai_reply = response.text
     except Exception as e:
         ai_reply = "⚠️ Sorry, I'm having trouble connecting to Gemini right now."
-
+    
     st.session_state.chat_history.append({"role": "assistant", "content": ai_reply})
     with st.chat_message("assistant"):
         st.markdown(ai_reply)
