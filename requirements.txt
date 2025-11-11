@@ -1,6 +1,7 @@
 streamlit
-pdfplumber
-python-docx
-matplotlib
+pandas
+plotly
 Pillow
-regex
+PyMuPDF
+python-dotenv
+google-generativeai
