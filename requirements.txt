@@ -1,4 +1,10 @@
 streamlit
 PyPDF2
+nltk
+scikit-learn
 matplotlib
 pandas
+numpy
+regex
+openai
+requests
