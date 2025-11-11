@@ -9,15 +9,15 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import re
+from dotenv import load_dotenv
 
-# Optional: AI integration
+# -------------------- LOAD GEMINI API --------------------
 try:
     import google.generativeai as genai
-    from dotenv import load_dotenv
     load_dotenv()
-    api_key = os.getenv("GENAI_API_KEY")
-    if api_key:
-        genai.configure(api_key=api_key)
+    GEMINI_API_KEY = os.getenv("AIzaSyDT9MzjRdQqud1QcekSsQPRbmFhphAppVA")
+    if GEMINI_API_KEY:
+        genai.configure(api_key=GEMINI_API_KEY)
         AI_ENABLED = True
     else:
         AI_ENABLED = False
@@ -56,8 +56,7 @@ def pdf_to_jpg(pdf_path, output_folder="pdf_images", dpi=300):
 
 def process_image(file_path="", prompt="", type=None):
     if not AI_ENABLED:
-        return {}  # AI features disabled
-    import google.generativeai as genai
+        return {}  # AI disabled
     try:
         model = genai.GenerativeModel("gemini-1.5-flash-002")
         if type == "image":
@@ -94,7 +93,7 @@ def show_pdf(file_path):
 def show_dashboard():
     st.header("📊 AI Career Dashboard")
     if not AI_ENABLED:
-        st.warning("⚠️ AI features are disabled. Set GENAI_API_KEY in your .env to enable resume analysis and career insights.")
+        st.warning("⚠️ AI features are disabled. Set GEMINI_API_KEY in your .env to enable resume analysis and career insights.")
         return
     if "extracted_data" in st.session_state and st.session_state.extracted_data:
         data = st.session_state.extracted_data
@@ -146,7 +145,7 @@ if page=="🏠 Home":
         with open(file_path, "wb") as f: f.write(uploaded_file.getbuffer())
         if st.button("🔍 Analyze Resume"):
             if not AI_ENABLED:
-                st.warning("⚠️ AI is disabled. Set GENAI_API_KEY to enable analysis.")
+                st.warning("⚠️ AI is disabled. Set GEMINI_API_KEY to enable analysis.")
             else:
                 with st.spinner("Analyzing resume..."):
                     images = pdf_to_jpg(file_path)
@@ -188,7 +187,7 @@ elif page=="💼 Project Extractor":
 elif page=="🤖 Career Chatbot":
     st.title("🤖 AI Career Chat Assistant")
     if not AI_ENABLED:
-        st.warning("⚠️ AI Chatbot disabled. Set GENAI_API_KEY to enable AI responses.")
+        st.warning("⚠️ AI Chatbot disabled. Set GEMINI_API_KEY to enable AI responses.")
     else:
         if "chat_history" not in st.session_state: st.session_state.chat_history=[]
         user_input = st.text_input("You:", key="user_input")
