@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 # -------------------- LOAD GEMINI API --------------------
 try:
     import google.generativeai as genai
-    load_dotenv()
-    GEMINI_API_KEY = os.getenv("AIzaSyDT9MzjRdQqud1QcekSsQPRbmFhphAppVA")
+    load_dotenv()  # Load environment variables
+    GEMINI_API_KEY = os.getenv("AIzaSyDT9MzjRdQqud1QcekSsQPRbmFhphAppVA")  # Correct usage
     if GEMINI_API_KEY:
         genai.configure(api_key=GEMINI_API_KEY)
         AI_ENABLED = True
@@ -56,7 +56,7 @@ def pdf_to_jpg(pdf_path, output_folder="pdf_images", dpi=300):
 
 def process_image(file_path="", prompt="", type=None):
     if not AI_ENABLED:
-        return {}  # AI disabled
+        return {}
     try:
         model = genai.GenerativeModel("gemini-1.5-flash-002")
         if type == "image":
@@ -86,14 +86,14 @@ def extract_projects(text):
 def show_pdf(file_path):
     with open(file_path, "rb") as f:
         base64_pdf = base64.b64encode(f.read()).decode("utf-8")
-    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="400" type="application/pdf"></iframe>'
+    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="400"></iframe>'
     st.markdown(pdf_display, unsafe_allow_html=True)
 
 # -------------------- DASHBOARD --------------------
 def show_dashboard():
     st.header("📊 AI Career Dashboard")
     if not AI_ENABLED:
-        st.warning("⚠️ AI features are disabled. Set GEMINI_API_KEY in your .env to enable resume analysis and career insights.")
+        st.warning("⚠️ AI features are disabled. Set GEMINI_API_KEY in your .env to enable resume analysis.")
         return
     if "extracted_data" in st.session_state and st.session_state.extracted_data:
         data = st.session_state.extracted_data
@@ -101,6 +101,7 @@ def show_dashboard():
         matched = data.get("keyword_matching", [])
         missing = data.get("missing_keywords", [])
         suggestions = data.get("suggestions", [])
+
         col1, col2, col3 = st.columns([1,2,2])
         with col1:
             st.markdown('<div class="card" style="text-align:center;"><h3>Overall Score</h3></div>', unsafe_allow_html=True)
@@ -126,7 +127,7 @@ def show_dashboard():
             st.markdown('<div class="card"><h4>💡 Suggestions</h4></div>', unsafe_allow_html=True)
             for s in suggestions: st.markdown(f'<span class="suggestion-badge">{s}</span>', unsafe_allow_html=True)
     else:
-        st.info("Upload resume and paste a job description below to see the dashboard.")
+        st.info("Upload resume and paste a job description to see the dashboard.")
 
 # -------------------- SIDEBAR NAVIGATION --------------------
 st.sidebar.title("📘 Nuvora AI Job Assistant")
