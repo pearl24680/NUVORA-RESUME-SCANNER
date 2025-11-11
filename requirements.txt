@@ -8,3 +8,4 @@ numpy
 regex
 openai
 requests
+google-generativeai
