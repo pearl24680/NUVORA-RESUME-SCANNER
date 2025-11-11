@@ -171,4 +171,4 @@ elif page == "💬 Chat Assistant":
 # ==============================
 # 🧾 FOOTER
 # ==============================
-st.markdown("<hr><p style='text-align:center;color:gray;'>Developed with ❤️ by Team Nuvora</p>", unsafe_allow_html=True)
+st.markdown("<hr><p style='text-align:center;color:gray;'>Developed with ❤️ by pearl and vasu</p>", unsafe_allow_html=True)
