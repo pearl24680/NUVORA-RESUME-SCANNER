@@ -6,57 +6,26 @@ import matplotlib.pyplot as plt
 import google.generativeai as genai
 
 # ==============================
-# 🎨 Page Configuration
+# 🎨 PAGE CONFIGURATION
 # ==============================
 st.set_page_config(page_title="Nuvora AI - Resume & Career Assistant", page_icon="💫", layout="wide")
 
-# --- Custom Premium Dark Theme ---
+# --- Dark Premium Theme CSS ---
 st.markdown("""
     <style>
-    body {
-        background-color: #0A0F24;
-        color: #EAEAEA;
-        font-family: 'Poppins', sans-serif;
-    }
-    .stApp {
-        background-color: #0A0F24;
-        color: #EAEAEA;
-    }
-    .title {
-        font-size: 42px;
-        font-weight: 800;
-        background: linear-gradient(90deg, #00C6FF, #0072FF);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-align: center;
-    }
-    .card {
-        background: linear-gradient(145deg, #1B1F3B, #101325);
-        padding: 25px;
-        border-radius: 20px;
-        box-shadow: 2px 4px 10px rgba(0,0,0,0.4);
-    }
-    .metric {
-        font-size: 28px;
-        font-weight: 600;
-        color: #00C6FF;
-    }
-    .stTextInput>div>div>input {
-        background-color: #1E223D;
-        color: white;
-    }
-    .stButton>button {
-        background: linear-gradient(90deg, #0072FF, #00C6FF);
-        color: white;
-        border-radius: 10px;
-        border: none;
-        font-weight: bold;
-    }
+    body { background-color: #0A0F24; color: #EAEAEA; font-family: 'Poppins', sans-serif; }
+    .stApp { background-color: #0A0F24; color: #EAEAEA; }
+    .title { font-size: 42px; font-weight: 800; background: linear-gradient(90deg, #00C6FF, #0072FF);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
+    .card { background: linear-gradient(145deg, #1B1F3B, #101325); padding: 25px; border-radius: 20px;
+        box-shadow: 2px 4px 10px rgba(0,0,0,0.4); }
+    .stButton>button { background: linear-gradient(90deg, #0072FF, #00C6FF);
+        color: white; border-radius: 10px; border: none; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# 🔑 Gemini AI Setup
+# 🔑 GEMINI API SETUP
 # ==============================
 genai.configure(api_key="YOUR_GEMINI_API_KEY")  # Replace with your Gemini key
 
@@ -69,7 +38,7 @@ def ask_gemini(prompt):
         return f"⚠️ Error: {str(e)}"
 
 # ==============================
-# 📂 Helper Functions
+# 📂 HELPER FUNCTIONS
 # ==============================
 def extract_text_from_pdf(uploaded_file):
     text = ""
@@ -99,50 +68,67 @@ def calculate_ats_score(resume_text, job_desc):
     return round(score, 2), matched, missing
 
 # ==============================
-# 🧭 Sidebar Navigation
+# 🧭 SIDEBAR NAVIGATION
 # ==============================
 st.sidebar.title("💫 Nuvora AI")
 st.sidebar.markdown("---")
 page = st.sidebar.radio("Navigate to:", ["🏠 Home", "📊 ATS Resume Scanner", "💬 Career Chat"])
-
 st.sidebar.markdown("---")
 st.sidebar.caption("Developed by Team Nuvora 💙")
 
 # ==============================
-# 🏠 Home
+# 🏠 HOME
 # ==============================
 if page == "🏠 Home":
     st.markdown('<p class="title">💫 Nuvora AI - Resume & Career Assistant</p>', unsafe_allow_html=True)
     st.markdown("""
         <div class='card'>
         <h3>🚀 Welcome to Nuvora!</h3>
-        <p>Empower your career with smart AI tools:</p>
+        <p>Upload your Resume & compare it with a Job Description to get:</p>
         <ul>
-        <li>📄 Analyze your Resume for ATS Optimization</li>
-        <li>📊 Compare your skills with Job Descriptions</li>
-        <li>💬 Chat with AI for career and skill guidance</li>
+        <li>🎯 ATS Score</li>
+        <li>📊 Skill Match & Missing Keywords</li>
+        <li>💬 AI Career Guidance</li>
         </ul>
-        <p>Start by uploading your resume and job description!</p>
+        <p>Switch to "📊 ATS Resume Scanner" to start!</p>
         </div>
     """, unsafe_allow_html=True)
 
 # ==============================
-# 📊 ATS Resume Scanner
+# 📊 ATS RESUME SCANNER
 # ==============================
 elif page == "📊 ATS Resume Scanner":
     st.markdown('<p class="title">📈 ATS Resume Analyzer</p>', unsafe_allow_html=True)
-    st.write("Upload your Resume and Job Description to see how well they match.")
+    st.write("Upload your Resume & choose or upload a Job Description to see how well they match.")
 
     col1, col2 = st.columns(2)
+
     with col1:
         resume_file = st.file_uploader("📄 Upload Resume (PDF/DOCX)", type=["pdf", "docx"])
+
     with col2:
-        jd_file = st.file_uploader("🧾 Upload Job Description (PDF/DOCX/TXT)", type=["pdf", "docx", "txt"])
+        jd_option = st.selectbox("🎯 Choose a Job Description", 
+                                 ["-- Select JD --", "Data Scientist", "Web Developer", "AI Engineer", "Software Developer", "Custom Upload"])
+        
+        # Preset Job Descriptions
+        jd_presets = {
+            "Data Scientist": """Proficiency in Python, Pandas, NumPy, Machine Learning, Data Visualization, Scikit-learn, SQL, Deep Learning, and Model Deployment.""",
+            "Web Developer": """Strong in HTML, CSS, JavaScript, React, Node.js, REST APIs, Git, and Responsive Web Design.""",
+            "AI Engineer": """Experience with TensorFlow, PyTorch, NLP, Machine Learning, Python, and Deep Learning frameworks.""",
+            "Software Developer": """Knowledge of Java, C++, OOP, Data Structures, Algorithms, Databases, and Problem Solving."""
+        }
 
-    if resume_file and jd_file:
+        job_desc = ""
+        if jd_option in jd_presets:
+            job_desc = jd_presets[jd_option]
+        elif jd_option == "Custom Upload":
+            jd_file = st.file_uploader("🧾 Upload Job Description (PDF/DOCX/TXT)", type=["pdf", "docx", "txt"])
+            if jd_file:
+                job_desc = jd_file.read().decode("utf-8") if jd_file.name.endswith(".txt") else extract_text(jd_file)
+
+    # --- Perform Analysis ---
+    if resume_file and job_desc:
         resume_text = extract_text(resume_file)
-        job_desc = jd_file.read().decode("utf-8") if jd_file.name.endswith(".txt") else extract_text(jd_file)
-
         score, matched, missing = calculate_ats_score(resume_text, job_desc)
 
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -167,24 +153,16 @@ elif page == "📊 ATS Resume Scanner":
         st.markdown("### ⚠️ Missing Skills (Improve These)")
         st.warning(", ".join(list(missing)) if missing else "Perfect Match!")
 
-        st.markdown("### 💡 Smart Suggestions for Data Science Profile")
-        suggestions = [
-            "Include strong project keywords like 'Machine Learning' or 'AI'.",
-            "Mention tools such as Pandas, NumPy, Scikit-learn, and TensorFlow.",
-            "Add data visualization skills: Matplotlib, Power BI, or Seaborn.",
-            "Highlight impact metrics, e.g., 'Improved accuracy by 12%'.",
-            "Include teamwork, leadership, and problem-solving examples."
-        ]
-        for s in suggestions:
-            st.markdown(f"- {s}")
+        st.markdown("### 💡 Smart Suggestions for This Role")
+        ai_prompt = f"Suggest resume improvements for someone applying as a {jd_option} with ATS score {score}%"
+        st.info(ask_gemini(ai_prompt))
 
 # ==============================
-# 💬 AI Career Chat
+# 💬 CAREER CHAT
 # ==============================
 elif page == "💬 Career Chat":
     st.markdown('<p class="title">💬 Ask Nuvora AI</p>', unsafe_allow_html=True)
-    st.write("Ask anything about career, resume tips, or interview advice.")
-    user_input = st.text_input("💭 You:", placeholder="Ask your question here...")
+    user_input = st.text_input("💭 You:", placeholder="Ask about skills, resume, or job roles...")
 
     if user_input:
         with st.spinner("Thinking... 💫"):
@@ -192,11 +170,12 @@ elif page == "💬 Career Chat":
         st.markdown(f"<div class='card'><b>Nuvora 💫:</b><br>{reply}</div>", unsafe_allow_html=True)
 
 # ==============================
-# 🧾 Footer
+# 🧾 FOOTER
 # ==============================
 st.markdown("""
 <hr>
 <p style='text-align:center; color:gray;'>
-Developed with ❤️ by <b>Nuvora AI</b> | Empowering Resumes with Intelligence
+Developed with ❤️ by <b></b> | Resume Intelligence & Career Insights
 </p>
 """, unsafe_allow_html=True)
+
