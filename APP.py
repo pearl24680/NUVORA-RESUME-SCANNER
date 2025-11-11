@@ -1,116 +1,134 @@
 import streamlit as st
+import PyPDF2
+import re
+import nltk
 import matplotlib.pyplot as plt
-from PyPDF2 import PdfReader
-import pandas as pd
-import tempfile
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+nltk.download('punkt')
 
 # -------------------------------
-# Data Science Keywords
+# Page Configuration
 # -------------------------------
-DATA_SCIENCE_KEYWORDS = [
-    'Python', 'R', 'SQL', 'Pandas', 'NumPy', 'Scikit-learn', 
-    'Machine Learning', 'Deep Learning', 'TensorFlow', 'PyTorch', 
-    'Data Analysis', 'Data Visualization', 'Matplotlib', 'Seaborn', 
-    'Statistics', 'Regression', 'Classification', 'Clustering', 'NLP'
-]
+st.set_page_config(page_title="Nuvora - Resume Screening", page_icon="💫", layout="wide")
 
 # -------------------------------
-# Functions
+# Custom Styling
 # -------------------------------
-def extract_text_from_pdf(pdf_file):
+st.markdown("""
+    <style>
+        body { background-color: #E6F0FF; }
+        .stApp { background-color: #E6F0FF; }
+        .stButton button {
+            background-color: #0078FF;
+            color: white;
+            border-radius: 10px;
+            padding: 10px 25px;
+            font-weight: bold;
+            border: none;
+        }
+        .stButton button:hover {
+            background-color: #005FCC;
+            color: white;
+        }
+        textarea {
+            background-color: white !important;
+            color: #000 !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# -------------------------------
+# Header
+# -------------------------------
+st.title("💫 Nuvora — AI Resume Screening System")
+st.caption("Developed by Pearl Sethi | Final Year Project")
+
+# -------------------------------
+# Inputs
+# -------------------------------
+job_desc = st.text_area("📄 Paste Job Description", height=200)
+uploaded_file = st.file_uploader("📂 Upload Resume (PDF)", type=["pdf"])
+
+# -------------------------------
+# Helper Functions
+# -------------------------------
+def extract_text_from_pdf(file):
     text = ""
-    pdf_file.seek(0)
-    reader = PdfReader(pdf_file)
+    reader = PyPDF2.PdfReader(file)
     for page in reader.pages:
-        page_text = page.extract_text()
-        if page_text:
-            text += page_text + " "
+        text += page.extract_text() or ""
     return text.lower()
 
-def compute_ats_score(resume_text):
-    matches = [kw for kw in DATA_SCIENCE_KEYWORDS if kw.lower() in resume_text]
-    missing = [kw for kw in DATA_SCIENCE_KEYWORDS if kw.lower() not in resume_text]
-    ats_score = round(len(matches) / len(DATA_SCIENCE_KEYWORDS) * 100, 2)
-    return ats_score, matches, missing
+def calculate_similarity(jd, resume):
+    vectorizer = TfidfVectorizer(stop_words="english")
+    tfidf = vectorizer.fit_transform([jd, resume])
+    return round(cosine_similarity(tfidf[0:1], tfidf[1:2])[0][0] * 100, 2)
 
-def generate_bar_graph(matches, missing):
-    labels = ['Matched Keywords', 'Missing Keywords']
-    values = [len(matches), len(missing)]
-
-    plt.figure(figsize=(6,4))
-    plt.bar(labels, values, color=['green','red'])
-    plt.title('Resume Keyword Matching')
-    plt.ylabel('Number of Keywords')
-    plt.tight_layout()
-    
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
-    plt.savefig(temp_file.name)
-    plt.close()
-    return temp_file.name
-
-def generate_pie_chart(ats_score):
-    labels = ['Selection Chance', 'Remaining']
-    values = [ats_score, 100 - ats_score]
-
-    plt.figure(figsize=(5,5))
-    plt.pie(values, labels=labels, colors=['green','lightgrey'], autopct='%1.1f%%', startangle=90)
-    plt.title('Chances of Selection')
-    plt.tight_layout()
-
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
-    plt.savefig(temp_file.name)
-    plt.close()
-    return temp_file.name
-
-def suggest_resume_content(missing_keywords):
-    return [f"Include '{kw}' in your resume." for kw in missing_keywords]
+def extract_skills(text):
+    skills = [
+        "python", "java", "sql", "machine learning", "deep learning", "data science", "pandas", "numpy",
+        "matplotlib", "tensorflow", "keras", "power bi", "tableau", "excel", "data visualization",
+        "statistics", "flask", "django", "communication", "teamwork", "problem solving"
+    ]
+    found = [s for s in skills if re.search(rf"\\b{s}\\b", text)]
+    return found, list(set(skills) - set(found))
 
 # -------------------------------
-# Streamlit App
+# Main Logic
 # -------------------------------
-st.set_page_config(layout="wide")
-st.title("Data Science Resume Analyzer & ATS Score")
+if st.button("🚀 Analyze Resume"):
+    if not job_desc or not uploaded_file:
+        st.warning("⚠️ Please provide both Job Description and Resume.")
+    else:
+        jd_text = job_desc.lower()
+        resume_text = extract_text_from_pdf(uploaded_file)
 
-resume_file = st.file_uploader("Upload Resume (PDF)", type=['pdf'])
-job_description = st.text_area("Paste Job Description here (Optional)")
+        ats_score = calculate_similarity(jd_text, resume_text)
+        found_skills, missing_skills = extract_skills(resume_text)
 
-if resume_file:
-    resume_text = extract_text_from_pdf(resume_file)
-    ats_score, matches, missing = compute_ats_score(resume_text)
+        # Display results
+        st.success(f"✅ Nuvora Analysis Complete! ATS Score: **{ats_score}%**")
 
-    # ---------------- Bar Graph ----------------
-    st.subheader("Keyword Matching Graph")
-    bar_graph_path = generate_bar_graph(matches, missing)
-    st.image(bar_graph_path)
+        # 📊 ATS Graph
+        st.subheader("📊 Selection Probability")
+        fig, ax = plt.subplots()
+        ax.bar(["ATS Score"], [ats_score], color="#0078FF")
+        ax.set_ylim(0, 100)
+        ax.set_ylabel("Percentage")
+        ax.set_title("Resume Selection Probability")
+        st.pyplot(fig)
 
-    # ---------------- Pie Chart ----------------
-    st.subheader("Chances of Selection")
-    pie_chart_path = generate_pie_chart(ats_score)
-    st.image(pie_chart_path)
+        # 🧠 Skill Analysis
+        st.subheader("🧠 Skill Analysis")
+        st.write(f"**Skills Detected:** {', '.join(found_skills) if found_skills else 'None'}")
+        st.write(f"**Missing Important Skills:** {', '.join(missing_skills)}")
 
-    # ---------------- ATS Score ----------------
-    st.subheader("ATS Score")
-    st.progress(int(ats_score))
-    st.write(f"Your ATS score is: **{ats_score}%**")
+        # 🎯 Selection Probability Message
+        if ats_score >= 85:
+            st.success("Excellent match! High chance of shortlisting ✅")
+        elif ats_score >= 70:
+            st.info("Good match. You can improve a few points for a higher ATS score.")
+        else:
+            st.warning("Low match. Consider revising your resume to match the job description better.")
 
-    # ---------------- Matched & Missing Keywords ----------------
-    st.subheader("Matched Keywords")
-    st.write(", ".join(matches) if matches else "No keywords matched.")
+        # 💡 Suggestions for Data Science
+        st.subheader("💡 Resume Suggestions (For Data Science Profile)")
+        suggestions = [
+            "Add projects demonstrating hands-on data analysis or model building.",
+            "Mention frameworks like Scikit-learn, TensorFlow, or PyTorch.",
+            "Highlight experience with data visualization tools (Power BI, Tableau).",
+            "Include any Kaggle or internship experience.",
+            "Focus on problem statements, not just tools."
+        ]
+        for s in suggestions:
+            st.markdown(f"✅ {s}")
 
-    st.subheader("Missing Keywords / Suggestions")
-    suggestions = suggest_resume_content(missing)
-    for s in suggestions:
-        st.write(f"- {s}")
+        st.balloons()
 
-    # ---------------- Summary Table ----------------
-    st.subheader("Keyword Summary Table")
-    summary_df = pd.DataFrame({
-        'Keyword': DATA_SCIENCE_KEYWORDS,
-        'Status': ['Matched' if kw in matches else 'Missing' for kw in DATA_SCIENCE_KEYWORDS]
-    })
-    st.dataframe(summary_df)
-
-    if job_description:
-        st.subheader("Additional Notes")
-        st.write("Job description provided; ATS score is based on standard Data Science keywords.")
-
+# -------------------------------
+# Footer
+# -------------------------------
+st.markdown("---")
+st.markdown("💼 Built with ❤️ using Python, NLP & Streamlit | © 2025 Nuvora")
