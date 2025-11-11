@@ -6,25 +6,59 @@ import matplotlib.pyplot as plt
 import google.generativeai as genai
 
 # ==============================
-# 🎨 PAGE SETUP
+# 🎨 Page Configuration
 # ==============================
-st.set_page_config(page_title="Nuvora AI - Resume Scanner & Job Assistant", page_icon="💫", layout="wide")
+st.set_page_config(page_title="Nuvora AI - Resume & Career Assistant", page_icon="💫", layout="wide")
 
-# --- Dark Theme CSS ---
+# --- Custom Premium Dark Theme ---
 st.markdown("""
     <style>
-    body { background-color: #0e1117; color: white; }
-    .stApp { background-color: #0e1117; color: white; }
-    .title { font-size: 36px; font-weight: bold; color: #00BFFF; text-align:center; }
-    .metric { color: #FFD700; font-size: 22px; }
-    .stProgress > div > div > div > div { background-color: #00BFFF; }
+    body {
+        background-color: #0A0F24;
+        color: #EAEAEA;
+        font-family: 'Poppins', sans-serif;
+    }
+    .stApp {
+        background-color: #0A0F24;
+        color: #EAEAEA;
+    }
+    .title {
+        font-size: 42px;
+        font-weight: 800;
+        background: linear-gradient(90deg, #00C6FF, #0072FF);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-align: center;
+    }
+    .card {
+        background: linear-gradient(145deg, #1B1F3B, #101325);
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 2px 4px 10px rgba(0,0,0,0.4);
+    }
+    .metric {
+        font-size: 28px;
+        font-weight: 600;
+        color: #00C6FF;
+    }
+    .stTextInput>div>div>input {
+        background-color: #1E223D;
+        color: white;
+    }
+    .stButton>button {
+        background: linear-gradient(90deg, #0072FF, #00C6FF);
+        color: white;
+        border-radius: 10px;
+        border: none;
+        font-weight: bold;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# 🔑 Gemini API Setup
+# 🔑 Gemini AI Setup
 # ==============================
-genai.configure(api_key="YOUR_GEMINI_API_KEY")  # Replace with your key
+genai.configure(api_key="YOUR_GEMINI_API_KEY")  # Replace with your Gemini key
 
 def ask_gemini(prompt):
     try:
@@ -35,7 +69,7 @@ def ask_gemini(prompt):
         return f"⚠️ Error: {str(e)}"
 
 # ==============================
-# 📄 Helper Functions
+# 📂 Helper Functions
 # ==============================
 def extract_text_from_pdf(uploaded_file):
     text = ""
@@ -65,86 +99,97 @@ def calculate_ats_score(resume_text, job_desc):
     return round(score, 2), matched, missing
 
 # ==============================
-# 🧠 Sidebar Navigation
+# 🧭 Sidebar Navigation
 # ==============================
-st.sidebar.title("🧭 Navigation")
-page = st.sidebar.radio("Go to:", ["🏠 Dashboard", "📊 ATS Analysis", "💬 AI Career Chat"])
+st.sidebar.title("💫 Nuvora AI")
+st.sidebar.markdown("---")
+page = st.sidebar.radio("Navigate to:", ["🏠 Home", "📊 ATS Resume Scanner", "💬 Career Chat"])
+
+st.sidebar.markdown("---")
+st.sidebar.caption("Developed by Team Nuvora 💙")
 
 # ==============================
-# 📤 Upload Section
+# 🏠 Home
 # ==============================
-st.sidebar.subheader("📂 Upload Files")
-resume_file = st.sidebar.file_uploader("📄 Upload Resume (PDF/DOCX)", type=["pdf", "docx"])
-jd_file = st.sidebar.file_uploader("🧾 Upload Job Description", type=["pdf", "docx", "txt"])
+if page == "🏠 Home":
+    st.markdown('<p class="title">💫 Nuvora AI - Resume & Career Assistant</p>', unsafe_allow_html=True)
+    st.markdown("""
+        <div class='card'>
+        <h3>🚀 Welcome to Nuvora!</h3>
+        <p>Empower your career with smart AI tools:</p>
+        <ul>
+        <li>📄 Analyze your Resume for ATS Optimization</li>
+        <li>📊 Compare your skills with Job Descriptions</li>
+        <li>💬 Chat with AI for career and skill guidance</li>
+        </ul>
+        <p>Start by uploading your resume and job description!</p>
+        </div>
+    """, unsafe_allow_html=True)
 
 # ==============================
-# 🏠 Dashboard
+# 📊 ATS Resume Scanner
 # ==============================
-if page == "🏠 Dashboard":
-    st.markdown('<p class="title">💫 Nuvora AI - Resume & Job Assistant</p>', unsafe_allow_html=True)
-    st.write("Welcome to your personal AI-powered job assistant! Upload your resume and job description to analyze your ATS score and get smart insights.")
-    st.image("https://cdn-icons-png.flaticon.com/512/4712/4712104.png", width=150)
-    st.info("Tip: After uploading your files, go to **ATS Analysis** to view your detailed results.")
+elif page == "📊 ATS Resume Scanner":
+    st.markdown('<p class="title">📈 ATS Resume Analyzer</p>', unsafe_allow_html=True)
+    st.write("Upload your Resume and Job Description to see how well they match.")
 
-# ==============================
-# 📊 ATS ANALYSIS
-# ==============================
-elif page == "📊 ATS Analysis":
-    st.markdown('<p class="title">📈 Resume ATS Analysis</p>', unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        resume_file = st.file_uploader("📄 Upload Resume (PDF/DOCX)", type=["pdf", "docx"])
+    with col2:
+        jd_file = st.file_uploader("🧾 Upload Job Description (PDF/DOCX/TXT)", type=["pdf", "docx", "txt"])
+
     if resume_file and jd_file:
         resume_text = extract_text(resume_file)
-
-        if jd_file.name.endswith(".txt"):
-            job_desc = jd_file.read().decode("utf-8")
-        else:
-            job_desc = extract_text(jd_file)
+        job_desc = jd_file.read().decode("utf-8") if jd_file.name.endswith(".txt") else extract_text(jd_file)
 
         score, matched, missing = calculate_ats_score(resume_text, job_desc)
 
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
         col1.metric("🎯 ATS Score", f"{score}%")
-        col2.metric("✅ Matched Keywords", len(matched))
-        col3.metric("⚠️ Missing Keywords", len(missing))
+        col2.metric("✅ Matched", len(matched))
+        col3.metric("⚠️ Missing", len(missing))
+        st.markdown("</div>", unsafe_allow_html=True)
 
         # Graph
         fig, ax = plt.subplots(figsize=(4, 4))
-        ax.bar(["Match %"], [score], color="#00BFFF")
+        ax.bar(["Match %"], [score], color="#00C6FF")
         ax.set_ylim(0, 100)
         ax.set_ylabel("Selection Probability")
-        ax.set_facecolor("#111")
-        fig.patch.set_facecolor("#0e1117")
+        ax.set_facecolor("#0A0F24")
+        fig.patch.set_facecolor("#0A0F24")
         st.pyplot(fig)
 
         st.markdown("### ✅ Matched Skills")
-        st.write(", ".join(list(matched)) if matched else "No matches found")
+        st.success(", ".join(list(matched)) if matched else "No matched skills found.")
 
         st.markdown("### ⚠️ Missing Skills (Improve These)")
-        st.write(", ".join(list(missing)) if missing else "Perfect Match!")
+        st.warning(", ".join(list(missing)) if missing else "Perfect Match!")
 
-        st.markdown("### 💡 Suggestions for Data Science Profile")
+        st.markdown("### 💡 Smart Suggestions for Data Science Profile")
         suggestions = [
-            "Add more ML or AI-related project keywords.",
-            "Include libraries like Python, Pandas, NumPy, Scikit-learn.",
-            "Highlight visualization tools: Power BI, Matplotlib, Seaborn.",
-            "Add measurable outcomes like accuracy improvements.",
-            "Include teamwork and communication soft skills."
+            "Include strong project keywords like 'Machine Learning' or 'AI'.",
+            "Mention tools such as Pandas, NumPy, Scikit-learn, and TensorFlow.",
+            "Add data visualization skills: Matplotlib, Power BI, or Seaborn.",
+            "Highlight impact metrics, e.g., 'Improved accuracy by 12%'.",
+            "Include teamwork, leadership, and problem-solving examples."
         ]
         for s in suggestions:
             st.markdown(f"- {s}")
-    else:
-        st.warning("⚠️ Please upload your resume and job description files from the sidebar first!")
 
 # ==============================
 # 💬 AI Career Chat
 # ==============================
-elif page == "💬 AI Career Chat":
-    st.markdown('<p class="title">💬 Nuvora AI Career Chat</p>', unsafe_allow_html=True)
-    st.write("Chat with Nuvora AI about career advice, resume tips, or skill recommendations.")
-    user_input = st.text_input("💭 You:", placeholder="Ask me anything about your career...")
+elif page == "💬 Career Chat":
+    st.markdown('<p class="title">💬 Ask Nuvora AI</p>', unsafe_allow_html=True)
+    st.write("Ask anything about career, resume tips, or interview advice.")
+    user_input = st.text_input("💭 You:", placeholder="Ask your question here...")
+
     if user_input:
         with st.spinner("Thinking... 💫"):
             reply = ask_gemini(user_input)
-        st.markdown(f"**Nuvora 💫:** {reply}")
+        st.markdown(f"<div class='card'><b>Nuvora 💫:</b><br>{reply}</div>", unsafe_allow_html=True)
 
 # ==============================
 # 🧾 Footer
@@ -152,7 +197,6 @@ elif page == "💬 AI Career Chat":
 st.markdown("""
 <hr>
 <p style='text-align:center; color:gray;'>
-Developed by <b>Nuvora AI</b> 💫 | Resume Intelligence & Career Assistant
+Developed with ❤️ by <b>Nuvora AI</b> | Empowering Resumes with Intelligence
 </p>
 """, unsafe_allow_html=True)
-
