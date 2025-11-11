@@ -3,44 +3,40 @@ import pdfplumber
 import docx
 import re
 import matplotlib.pyplot as plt
-from io import BytesIO
+import google.generativeai as genai
 
 # ==============================
-# 🎨 Page Configuration
+# 🎨 PAGE SETUP
 # ==============================
-st.set_page_config(page_title="Nuvora AI Resume Scanner", page_icon="💫", layout="wide")
+st.set_page_config(page_title="Nuvora AI - Resume Scanner & Job Assistant", page_icon="💫", layout="wide")
 
-# --- Custom CSS for Dark Theme ---
+# --- Dark Theme CSS ---
 st.markdown("""
     <style>
-    body {
-        background-color: #0e1117;
-        color: white;
-    }
-    .stApp {
-        background-color: #0e1117;
-        color: white;
-    }
-    .big-font {
-        font-size: 36px !important;
-        font-weight: 700;
-        color: #00BFFF;
-        text-align: center;
-    }
-    .highlight {
-        color: #FFD700;
-        font-weight: bold;
-    }
-    .stProgress > div > div > div > div {
-        background-color: #00BFFF;
-    }
+    body { background-color: #0e1117; color: white; }
+    .stApp { background-color: #0e1117; color: white; }
+    .title { font-size: 36px; font-weight: bold; color: #00BFFF; text-align:center; }
+    .metric { color: #FFD700; font-size: 22px; }
+    .stProgress > div > div > div > div { background-color: #00BFFF; }
     </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# 🔍 Helper Functions
+# 🔑 Gemini API Setup
 # ==============================
+genai.configure(api_key="YOUR_GEMINI_API_KEY")  # Replace with your key
 
+def ask_gemini(prompt):
+    try:
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return f"⚠️ Error: {str(e)}"
+
+# ==============================
+# 📄 Helper Functions
+# ==============================
 def extract_text_from_pdf(uploaded_file):
     text = ""
     with pdfplumber.open(uploaded_file) as pdf:
@@ -63,91 +59,100 @@ def extract_text(uploaded_file):
 def calculate_ats_score(resume_text, job_desc):
     resume_words = set(re.findall(r'\b\w+\b', resume_text.lower()))
     jd_words = set(re.findall(r'\b\w+\b', job_desc.lower()))
-    matched_keywords = resume_words.intersection(jd_words)
-    score = (len(matched_keywords) / len(jd_words)) * 100 if len(jd_words) > 0 else 0
-    missing_keywords = jd_words - resume_words
-    return round(score, 2), matched_keywords, missing_keywords
+    matched = resume_words.intersection(jd_words)
+    score = (len(matched) / len(jd_words)) * 100 if len(jd_words) > 0 else 0
+    missing = jd_words - resume_words
+    return round(score, 2), matched, missing
 
 # ==============================
-# 🧠 Page Layout
+# 🧠 Sidebar Navigation
 # ==============================
-st.markdown('<p class="big-font">💫 Nuvora AI Resume Scanner</p>', unsafe_allow_html=True)
+st.sidebar.title("🧭 Navigation")
+page = st.sidebar.radio("Go to:", ["🏠 Dashboard", "📊 ATS Analysis", "💬 AI Career Chat"])
 
-tab1, tab2 = st.tabs(["📤 Upload Files", "📈 ATS Analysis"])
+# ==============================
+# 📤 Upload Section
+# ==============================
+st.sidebar.subheader("📂 Upload Files")
+resume_file = st.sidebar.file_uploader("📄 Upload Resume (PDF/DOCX)", type=["pdf", "docx"])
+jd_file = st.sidebar.file_uploader("🧾 Upload Job Description", type=["pdf", "docx", "txt"])
 
-with tab1:
-    st.subheader("Upload your Resume and Job Description")
-    resume_file = st.file_uploader("📄 Upload Resume (PDF/DOCX)", type=["pdf", "docx"])
-    jd_file = st.file_uploader("🧾 Upload Job Description (Text/PDF/DOCX)", type=["pdf", "docx", "txt"])
+# ==============================
+# 🏠 Dashboard
+# ==============================
+if page == "🏠 Dashboard":
+    st.markdown('<p class="title">💫 Nuvora AI - Resume & Job Assistant</p>', unsafe_allow_html=True)
+    st.write("Welcome to your personal AI-powered job assistant! Upload your resume and job description to analyze your ATS score and get smart insights.")
+    st.image("https://cdn-icons-png.flaticon.com/512/4712/4712104.png", width=150)
+    st.info("Tip: After uploading your files, go to **ATS Analysis** to view your detailed results.")
 
+# ==============================
+# 📊 ATS ANALYSIS
+# ==============================
+elif page == "📊 ATS Analysis":
+    st.markdown('<p class="title">📈 Resume ATS Analysis</p>', unsafe_allow_html=True)
     if resume_file and jd_file:
+        resume_text = extract_text(resume_file)
+
         if jd_file.name.endswith(".txt"):
             job_desc = jd_file.read().decode("utf-8")
         else:
             job_desc = extract_text(jd_file)
 
-        resume_text = extract_text(resume_file)
-
         score, matched, missing = calculate_ats_score(resume_text, job_desc)
 
-        st.session_state["ats_result"] = {
-            "score": score,
-            "matched": matched,
-            "missing": missing
-        }
-
-        st.success("✅ Files uploaded successfully! Now open 'ATS Analysis' tab.")
-
-with tab2:
-    st.subheader("AI Resume Analysis Report")
-
-    if "ats_result" not in st.session_state:
-        st.warning("⚠️ Please upload your resume and job description first!")
-    else:
-        ats_data = st.session_state["ats_result"]
-        score = ats_data["score"]
-        matched = ats_data["matched"]
-        missing = ats_data["missing"]
-
         col1, col2, col3 = st.columns(3)
-        col1.metric("📊 ATS Score", f"{score}%")
+        col1.metric("🎯 ATS Score", f"{score}%")
         col2.metric("✅ Matched Keywords", len(matched))
         col3.metric("⚠️ Missing Keywords", len(missing))
 
-        # --- Bar Graph for Selection Probability ---
+        # Graph
         fig, ax = plt.subplots(figsize=(4, 4))
         ax.bar(["Match %"], [score], color="#00BFFF")
         ax.set_ylim(0, 100)
         ax.set_ylabel("Selection Probability")
         ax.set_facecolor("#111")
-        fig.patch.set_facecolor('#0e1117')
+        fig.patch.set_facecolor("#0e1117")
         st.pyplot(fig)
 
-        # --- Matched and Missing Keywords ---
         st.markdown("### ✅ Matched Skills")
         st.write(", ".join(list(matched)) if matched else "No matches found")
 
         st.markdown("### ⚠️ Missing Skills (Improve These)")
         st.write(", ".join(list(missing)) if missing else "Perfect Match!")
 
-        # --- Suggestions ---
-        st.markdown("### 💡 AI Suggestions for Data Science Profile")
+        st.markdown("### 💡 Suggestions for Data Science Profile")
         suggestions = [
-            "Add projects related to Machine Learning or AI.",
-            "Include tools like Python, Pandas, NumPy, Scikit-learn.",
-            "Mention data visualization libraries (Matplotlib, Seaborn, Power BI).",
-            "Add measurable outcomes (e.g., 'Improved model accuracy by 15%').",
-            "Highlight teamwork, problem-solving, and communication skills."
+            "Add more ML or AI-related project keywords.",
+            "Include libraries like Python, Pandas, NumPy, Scikit-learn.",
+            "Highlight visualization tools: Power BI, Matplotlib, Seaborn.",
+            "Add measurable outcomes like accuracy improvements.",
+            "Include teamwork and communication soft skills."
         ]
         for s in suggestions:
             st.markdown(f"- {s}")
+    else:
+        st.warning("⚠️ Please upload your resume and job description files from the sidebar first!")
 
 # ==============================
-# 🌐 Footer
+# 💬 AI Career Chat
+# ==============================
+elif page == "💬 AI Career Chat":
+    st.markdown('<p class="title">💬 Nuvora AI Career Chat</p>', unsafe_allow_html=True)
+    st.write("Chat with Nuvora AI about career advice, resume tips, or skill recommendations.")
+    user_input = st.text_input("💭 You:", placeholder="Ask me anything about your career...")
+    if user_input:
+        with st.spinner("Thinking... 💫"):
+            reply = ask_gemini(user_input)
+        st.markdown(f"**Nuvora 💫:** {reply}")
+
+# ==============================
+# 🧾 Footer
 # ==============================
 st.markdown("""
 <hr>
 <p style='text-align:center; color:gray;'>
-Developed by <b>Nuvora AI</b> 💫 | Resume Intelligence Powered by NLP
+Developed by <b>Nuvora AI</b> 💫 | Resume Intelligence & Career Assistant
 </p>
 """, unsafe_allow_html=True)
+
