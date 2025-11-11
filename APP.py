@@ -60,7 +60,7 @@ st.sidebar.title("💫 Nuvora AI")
 st.sidebar.markdown("---")
 page = st.sidebar.radio("Navigate to:", ["🏠 Home", "📊 Resume Scanner", "💬 Chat Assistant"])
 st.sidebar.markdown("---")
-st.sidebar.caption("Developed by Team Nuvora 💙")
+st.sidebar.caption("Developed by pearl and vasu (final year project)")
 
 # ==============================
 # 🏠 HOME
