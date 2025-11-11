@@ -27,7 +27,7 @@ st.markdown("""
 # ==============================
 # 🔑 GEMINI API SETUP
 # ==============================
-genai.configure(api_key="YOUR_GEMINI_API_KEY")  # Replace with your Gemini key
+genai.configure(api_key="AIzaSyA7xdpcGMzXYEB7YlI3DW9qiMlqtjOIDIc") 
 
 def ask_gemini(prompt):
     try:
@@ -74,7 +74,7 @@ st.sidebar.title("💫 Nuvora AI")
 st.sidebar.markdown("---")
 page = st.sidebar.radio("Navigate to:", ["🏠 Home", "📊 ATS Resume Scanner", "💬 Career Chat"])
 st.sidebar.markdown("---")
-st.sidebar.caption("Developed by Team Nuvora 💙")
+st.sidebar.caption("Developed by pearl and vasu 💙")
 
 # ==============================
 # 🏠 HOME
@@ -175,7 +175,7 @@ elif page == "💬 Career Chat":
 st.markdown("""
 <hr>
 <p style='text-align:center; color:gray;'>
-Developed with ❤️ by <b></b> | Resume Intelligence & Career Insights
+Developed with ❤️ by <b>pearl</b> | Resume Intelligence & Career Insights
 </p>
 """, unsafe_allow_html=True)
 
