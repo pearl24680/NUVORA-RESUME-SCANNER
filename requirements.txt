@@ -3,3 +3,7 @@ pdfplumber
 python-docx
 matplotlib
 google-generativeai
+pandas
+numpy
+fuzzywuzzy
+python-Levenshtein
