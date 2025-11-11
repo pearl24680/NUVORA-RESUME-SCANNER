@@ -1,11 +1,5 @@
 streamlit
-PyPDF2
-nltk
-scikit-learn
+pdfplumber
+python-docx
 matplotlib
-pandas
-numpy
-regex
-openai
-requests
 google-generativeai
