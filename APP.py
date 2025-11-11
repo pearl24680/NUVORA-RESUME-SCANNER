@@ -250,4 +250,3 @@ elif choice == "🤖 AI Career Chat":
             st.markdown(f"<div class='user-msg'>{chat['content']}</div>", unsafe_allow_html=True)
         else:
             st.markdown(f"<div class='bot-msg'>{chat['content']}</div>", unsafe_allow_html=True)
-
