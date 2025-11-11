@@ -5,25 +5,27 @@ import re
 import matplotlib.pyplot as plt
 
 # ==============================
-# 🎨 Page Configuration
+# 🎨 PAGE CONFIGURATION
 # ==============================
-st.set_page_config(page_title="Nuvora AI Resume Scanner", page_icon="💫", layout="wide")
+st.set_page_config(page_title="Nuvora AI - Resume & Career Assistant", page_icon="💫", layout="wide")
 
-# --- Custom CSS ---
+# --- Dark Premium Theme CSS ---
 st.markdown("""
     <style>
-    body { background-color: #0e1117; color: white; }
-    .stApp { background-color: #0e1117; color: white; }
-    .big-font { font-size: 36px !important; font-weight: 700; color: #00BFFF; text-align: center; }
-    .stProgress > div > div > div > div { background-color: #00BFFF; }
-    .stTextInput > div > div > input { color: white; }
+    body { background-color: #0A0F24; color: #EAEAEA; font-family: 'Poppins', sans-serif; }
+    .stApp { background-color: #0A0F24; color: #EAEAEA; }
+    .title { font-size: 42px; font-weight: 800; background: linear-gradient(90deg, #00C6FF, #0072FF);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
+    .card { background: linear-gradient(145deg, #1B1F3B, #101325); padding: 25px; border-radius: 20px;
+        box-shadow: 2px 4px 10px rgba(0,0,0,0.4); }
+    .stButton>button { background: linear-gradient(90deg, #0072FF, #00C6FF);
+        color: white; border-radius: 10px; border: none; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# 🔍 Helper Functions
+# 📂 HELPER FUNCTIONS
 # ==============================
-
 def extract_text_from_pdf(uploaded_file):
     text = ""
     with pdfplumber.open(uploaded_file) as pdf:
@@ -46,128 +48,137 @@ def extract_text(uploaded_file):
 def calculate_ats_score(resume_text, job_desc):
     resume_words = set(re.findall(r'\b\w+\b', resume_text.lower()))
     jd_words = set(re.findall(r'\b\w+\b', job_desc.lower()))
-    matched_keywords = resume_words.intersection(jd_words)
-    score = (len(matched_keywords) / len(jd_words)) * 100 if len(jd_words) > 0 else 0
-    missing_keywords = jd_words - resume_words
-    return round(score, 2), matched_keywords, missing_keywords
+    matched = resume_words.intersection(jd_words)
+    score = (len(matched) / len(jd_words)) * 100 if len(jd_words) > 0 else 0
+    missing = jd_words - resume_words
+    return round(score, 2), matched, missing
 
-def local_ai_chat(user_input):
-    """Simple offline chatbot logic."""
-    user_input = user_input.lower()
-    if "hello" in user_input or "hi" in user_input:
-        return "💫 Hi there! I'm Nuvora — your AI study and career assistant."
-    elif "resume" in user_input:
-        return "📄 I can help you analyze resumes and job descriptions for ATS compatibility."
-    elif "data science" in user_input:
-        return "🧠 Data Science involves Python, Pandas, NumPy, Machine Learning, and visualization tools like Power BI or Tableau."
-    elif "python" in user_input:
-        return "🐍 Python is great for automation, data analysis, and AI. Would you like to see example code?"
-    elif "help" in user_input:
-        return "💡 You can upload your resume and job description to get ATS score, missing keywords, and smart suggestions."
+# ==============================
+# 🧠 OFFLINE LOCAL CHATBOT
+# ==============================
+def local_ai_reply(prompt):
+    prompt = prompt.lower()
+    if "hello" in prompt or "hi" in prompt:
+        return "👋 Hi there! I'm Nuvora — your resume and career assistant."
+    elif "resume" in prompt:
+        return "📄 You can upload your resume and job description to get ATS analysis instantly!"
+    elif "data science" in prompt:
+        return "🧠 For Data Science roles, focus on Python, Pandas, NumPy, ML models, and visualization tools like Power BI."
+    elif "web" in prompt or "developer" in prompt:
+        return "💻 Web Developers should highlight HTML, CSS, JS, React, and backend frameworks like Node or Django."
+    elif "ai" in prompt:
+        return "🤖 AI Engineers often work with ML frameworks like TensorFlow, PyTorch, and deep learning algorithms."
+    elif "help" in prompt:
+        return "💡 You can ask me about resumes, interview skills, or best practices for tech jobs!"
     else:
-        return "🤖 I'm Nuvora! I can answer study, coding, and career-related questions. Try asking me about Python, resumes, or data science."
+        return "💬 I’m Nuvora! Ask me about resumes, coding, or job skills — I’ll try to help!"
 
 # ==============================
-# 🧠 Page Layout
+# 🧭 SIDEBAR NAVIGATION
 # ==============================
-st.markdown('<p class="big-font">💫 Nuvora AI Resume Scanner</p>', unsafe_allow_html=True)
+st.sidebar.title("💫 Nuvora AI")
+st.sidebar.markdown("---")
+page = st.sidebar.radio("Navigate to:", ["🏠 Home", "📊 ATS Resume Scanner", "💬 Career Chat"])
+st.sidebar.markdown("---")
+st.sidebar.caption("Developed by Team Nuvora 💙")
 
-tab1, tab2, tab3 = st.tabs(["📤 Upload Files", "📈 ATS Analysis", "💬 Ask Nuvora AI"])
+# ==============================
+# 🏠 HOME
+# ==============================
+if page == "🏠 Home":
+    st.markdown('<p class="title">💫 Nuvora AI - Resume & Career Assistant</p>', unsafe_allow_html=True)
+    st.markdown("""
+        <div class='card'>
+        <h3>🚀 Welcome to Nuvora!</h3>
+        <p>Upload your Resume & compare it with a Job Description to get:</p>
+        <ul>
+        <li>🎯 ATS Score</li>
+        <li>📊 Skill Match & Missing Keywords</li>
+        <li>💬 AI Career Guidance</li>
+        </ul>
+        <p>Switch to "📊 ATS Resume Scanner" to start!</p>
+        </div>
+    """, unsafe_allow_html=True)
 
-# ------------------------------
-# 📤 TAB 1: Upload Files
-# ------------------------------
-with tab1:
-    st.subheader("Upload your Resume and Job Description")
-    resume_file = st.file_uploader("📄 Upload Resume (PDF/DOCX)", type=["pdf", "docx"])
-    jd_file = st.file_uploader("🧾 Upload Job Description (Text/PDF/DOCX)", type=["pdf", "docx", "txt"])
+# ==============================
+# 📊 ATS RESUME SCANNER
+# ==============================
+elif page == "📊 ATS Resume Scanner":
+    st.markdown('<p class="title">📈 ATS Resume Analyzer</p>', unsafe_allow_html=True)
+    st.write("Upload your Resume & choose or upload a Job Description to see how well they match.")
 
-    if resume_file and jd_file:
-        if jd_file.name.endswith(".txt"):
-            job_desc = jd_file.read().decode("utf-8")
-        else:
-            job_desc = extract_text(jd_file)
+    col1, col2 = st.columns(2)
 
-        resume_text = extract_text(resume_file)
+    with col1:
+        resume_file = st.file_uploader("📄 Upload Resume (PDF/DOCX)", type=["pdf", "docx"])
 
-        score, matched, missing = calculate_ats_score(resume_text, job_desc)
-
-        st.session_state["ats_result"] = {
-            "score": score,
-            "matched": matched,
-            "missing": missing
+    with col2:
+        jd_option = st.selectbox("🎯 Choose a Job Description", 
+                                 ["-- Select JD --", "Data Scientist", "Web Developer", "AI Engineer", "Software Developer", "Custom Upload"])
+        
+        jd_presets = {
+            "Data Scientist": """Proficiency in Python, Pandas, NumPy, Machine Learning, Data Visualization, Scikit-learn, SQL, Deep Learning, and Model Deployment.""",
+            "Web Developer": """Strong in HTML, CSS, JavaScript, React, Node.js, REST APIs, Git, and Responsive Web Design.""",
+            "AI Engineer": """Experience with TensorFlow, PyTorch, NLP, Machine Learning, Python, and Deep Learning frameworks.""",
+            "Software Developer": """Knowledge of Java, C++, OOP, Data Structures, Algorithms, Databases, and Problem Solving."""
         }
 
-        st.success("✅ Files uploaded successfully! Now open 'ATS Analysis' tab.")
+        job_desc = ""
+        if jd_option in jd_presets:
+            job_desc = jd_presets[jd_option]
+        elif jd_option == "Custom Upload":
+            jd_file = st.file_uploader("🧾 Upload Job Description (PDF/DOCX/TXT)", type=["pdf", "docx", "txt"])
+            if jd_file:
+                job_desc = jd_file.read().decode("utf-8") if jd_file.name.endswith(".txt") else extract_text(jd_file)
 
-# ------------------------------
-# 📈 TAB 2: ATS Analysis
-# ------------------------------
-with tab2:
-    st.subheader("AI Resume Analysis Report")
+    # --- Perform Analysis ---
+    if resume_file and job_desc:
+        resume_text = extract_text(resume_file)
+        score, matched, missing = calculate_ats_score(resume_text, job_desc)
 
-    if "ats_result" not in st.session_state:
-        st.warning("⚠️ Please upload your resume and job description first!")
-    else:
-        ats_data = st.session_state["ats_result"]
-        score = ats_data["score"]
-        matched = ats_data["matched"]
-        missing = ats_data["missing"]
-
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
-        col1.metric("📊 ATS Score", f"{score}%")
-        col2.metric("✅ Matched Keywords", len(matched))
-        col3.metric("⚠️ Missing Keywords", len(missing))
+        col1.metric("🎯 ATS Score", f"{score}%")
+        col2.metric("✅ Matched", len(matched))
+        col3.metric("⚠️ Missing", len(missing))
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        # --- Graph for Selection Probability ---
+        # Graph
         fig, ax = plt.subplots(figsize=(4, 4))
-        ax.bar(["Match %"], [score], color="#00BFFF")
+        ax.bar(["Match %"], [score], color="#00C6FF")
         ax.set_ylim(0, 100)
         ax.set_ylabel("Selection Probability")
-        ax.set_facecolor("#111")
-        fig.patch.set_facecolor('#0e1117')
+        ax.set_facecolor("#0A0F24")
+        fig.patch.set_facecolor("#0A0F24")
         st.pyplot(fig)
 
-        # --- Keywords Info ---
         st.markdown("### ✅ Matched Skills")
-        st.write(", ".join(list(matched)) if matched else "No matches found")
+        st.success(", ".join(list(matched)) if matched else "No matched skills found.")
 
         st.markdown("### ⚠️ Missing Skills (Improve These)")
-        st.write(", ".join(list(missing)) if missing else "Perfect Match!")
+        st.warning(", ".join(list(missing)) if missing else "Perfect Match!")
 
-        # --- Smart Suggestions ---
         st.markdown("### 💡 Smart Suggestions for This Role")
-        suggestions = [
-            "Add ML or AI project experience.",
-            "Include Python, Pandas, NumPy, Scikit-learn.",
-            "Mention Power BI, Tableau, or Excel visualization.",
-            "Quantify achievements (e.g., 'Improved accuracy by 15%').",
-            "Add teamwork and communication skills."
-        ]
-        for s in suggestions:
-            st.markdown(f"- {s}")
-
-# ------------------------------
-# 💬 TAB 3: Ask Nuvora AI
-# ------------------------------
-with tab3:
-    st.subheader("💬 Chat with Nuvora AI Assistant")
-    user_input = st.text_input("Type your question here...")
-
-    if st.button("Ask"):
-        if user_input.strip():
-            response = local_ai_chat(user_input)
-            st.markdown(f"**Nuvora 💫:** {response}")
-        else:
-            st.warning("Please type something before clicking Ask!")
+        st.info("Add relevant projects, mention metrics (like accuracy %), and list strong tools like Python, SQL, and visualization skills.")
 
 # ==============================
-# 🌐 Footer
+# 💬 CAREER CHAT
+# ==============================
+elif page == "💬 Career Chat":
+    st.markdown('<p class="title">💬 Ask Nuvora AI</p>', unsafe_allow_html=True)
+    user_input = st.text_input("💭 You:", placeholder="Ask about skills, resume, or job roles...")
+
+    if user_input:
+        with st.spinner("Thinking... 💫"):
+            reply = local_ai_reply(user_input)
+        st.markdown(f"<div class='card'><b>Nuvora 💫:</b><br>{reply}</div>", unsafe_allow_html=True)
+
+# ==============================
+# 🧾 FOOTER
 # ==============================
 st.markdown("""
 <hr>
 <p style='text-align:center; color:gray;'>
-Developed by <b>pearl</b> 💫 |  Resume Intelligence
+Developed with ❤️ by <b>pearl</b> | Resume Intelligence & Career Insights
 </p>
 """, unsafe_allow_html=True)
-
