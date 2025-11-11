@@ -1,7 +1,4 @@
 streamlit
+PyPDF2
+matplotlib
 pandas
-plotly
-Pillow
-PyMuPDF
-python-dotenv
-google-generativeai
