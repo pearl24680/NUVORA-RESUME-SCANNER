@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 # ==============================
 # 🎨 PAGE CONFIGURATION
 # ==============================
-st.set_page_config(page_title="💫 Nuvora Resume AI Scanner", page_icon="💼", layout="wide")
+st.set_page_config(page_title="💫 Nuvora Resume Scanner", page_icon="💼", layout="wide")
 
 # --- Custom Styling ---
 st.markdown("""
@@ -123,20 +123,29 @@ elif page == "📊 Resume Scanner":
         col3.metric("⚠️ Missing", len(missing))
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # --- Mini White ATS Bar Graph ---
-        fig, ax = plt.subplots(figsize=(1.2, 1.2))  # smaller compact graph
-        ax.bar(["ATS Match %"], [score], color="#007BFF", width=0.3)
-        ax.set_facecolor("white")
+        # --- Clean Dashboard-Style Bar Graph ---
+        fig, ax = plt.subplots(figsize=(2, 2.5))  # perfectly balanced small size
+        bars = ax.bar(["ATS Match %"], [score], color="#007BFF", width=0.5)
+
+        # White background for both figure and axis
         fig.patch.set_facecolor("white")
+        ax.set_facecolor("white")
 
-        # Clean minimal style
-        for spine in ax.spines.values():
-            spine.set_visible(False)
-        ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
+        # Minimal clean chart
         ax.set_ylim(0, 100)
-        ax.text(0, score + 3, f"{score}%", ha='center', va='bottom', fontsize=10, fontweight='bold', color='black')
+        ax.set_ylabel("Score (%)", fontsize=8, color="black")
+        ax.tick_params(axis='x', colors='black', labelsize=9)
+        ax.tick_params(axis='y', colors='black', labelsize=8)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
 
-        st.pyplot(fig, transparent=True)
+        # Value label on the bar
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2, height + 2, f"{score}%", 
+                    ha='center', va='bottom', color='black', fontsize=10, fontweight='bold')
+
+        st.pyplot(fig)
 
         # Missing Keywords Section
         st.markdown("<div class='card'><h4>🔍 Missing Keywords:</h4>", unsafe_allow_html=True)
@@ -146,8 +155,8 @@ elif page == "📊 Resume Scanner":
             st.write("✅ Your resume covers all key skills!")
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # Suggestions
-        st.info(f"💡 Suggestion: Add missing keywords related to the {jd_option} role to boost your ATS score.")
+        # Suggestion
+        st.info(f"💡 Suggestion: Add missing keywords related to {jd_option} to boost your ATS score.")
 
 # ==============================
 # 💬 CHAT ASSISTANT
