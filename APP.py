@@ -124,29 +124,31 @@ elif page == "📊 Resume Scanner":
         st.markdown("</div>", unsafe_allow_html=True)
 
         
-       # --- Smaller & White ATS Bar Graph ---
-fig, ax = plt.subplots(figsize=(2, 2))  # Smaller graph size
-ax.bar(["ATS Match %"], [score], color="#0072FF", width=0.4)
+       
+        # --- Smaller & White ATS Bar Graph ---
+        fig, ax = plt.subplots(figsize=(2, 2))  # Smaller graph size
+        ax.bar(["ATS Match %"], [score], color="#0072FF", width=0.4)
 
-# White background and clean style
-ax.set_facecolor("white")
-fig.patch.set_facecolor("white")
+        # White background and clean style
+        ax.set_facecolor("white")
+        fig.patch.set_facecolor("white")
 
-# Remove top/right borders for a clean look
-ax.spines['top'].set_visible(False)
-ax.spines['right'].set_visible(False)
+        # Remove top/right borders for a clean look
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
 
-# Labels
-ax.set_ylim(0, 100)
-ax.set_ylabel("Score (%)", color="black", fontsize=9)
-ax.tick_params(axis='x', colors='black')
-ax.tick_params(axis='y', colors='black')
+        # Labels
+        ax.set_ylim(0, 100)
+        ax.set_ylabel("Score (%)", color="black", fontsize=9)
+        ax.tick_params(axis='x', colors='black')
+        ax.tick_params(axis='y', colors='black')
 
-# Show the score on the bar
-ax.text(0, score + 2, f"{score}%", ha='center', color='black', fontweight='bold')
+     # Show the score on the bar
+        ax.text(0, score + 2, f"{score}%", ha='center', color='black', fontweight='bold')
 
-# Display in Streamlit
-st.pyplot(fig)
+     # Display in Streamlit
+        st.pyplot(fig)
+
 
 
         # Suggestions
