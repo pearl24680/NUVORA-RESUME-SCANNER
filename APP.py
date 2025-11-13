@@ -18,6 +18,12 @@ st.markdown("""
     .card { background: linear-gradient(145deg, #1B1F3B, #101325);
         padding: 25px; border-radius: 20px; margin-bottom: 20px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+    .mini-card {
+        background: #13193B;
+        padding: 20px; border-radius: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        text-align: center;
+    }
     .stButton>button { background: linear-gradient(90deg, #0072FF, #00C6FF);
         color: white; border-radius: 10px; border: none; font-weight: bold; }
     </style>
@@ -116,36 +122,34 @@ elif page == "📊 Resume Scanner":
         resume_text = extract_text(resume_file)
         score, matched, missing = calculate_ats_score(resume_text, job_desc)
 
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        col1, col2, col3 = st.columns(3)
-        col1.metric("🎯 ATS Score", f"{score}%")
-        col2.metric("✅ Matched", len(matched))
-        col3.metric("⚠️ Missing", len(missing))
+        # --- MINI DASHBOARD CARD ---
+        st.markdown("<div class='card'><h4>📊 Resume Match Overview</h4>", unsafe_allow_html=True)
+        dash_col1, dash_col2, dash_col3, dash_col4 = st.columns([1, 1, 1, 1.2])
+
+        with dash_col1:
+            st.markdown(f"<div class='mini-card'><h3 style='color:#00C6FF;'>{score}%</h3><p>ATS Score</p></div>", unsafe_allow_html=True)
+        with dash_col2:
+            st.markdown(f"<div class='mini-card'><h3 style='color:#34D399;'>{len(matched)}</h3><p>Matched</p></div>", unsafe_allow_html=True)
+        with dash_col3:
+            st.markdown(f"<div class='mini-card'><h3 style='color:#F87171;'>{len(missing)}</h3><p>Missing</p></div>", unsafe_allow_html=True)
+        with dash_col4:
+            fig, ax = plt.subplots(figsize=(2, 2.5))
+            bars = ax.bar(["ATS Match %"], [score], color="#007BFF", width=0.5)
+            fig.patch.set_facecolor("white")
+            ax.set_facecolor("white")
+            ax.set_ylim(0, 100)
+            ax.set_ylabel("Score (%)", fontsize=8, color="black")
+            ax.tick_params(axis='x', colors='black', labelsize=9)
+            ax.tick_params(axis='y', colors='black', labelsize=8)
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            for bar in bars:
+                height = bar.get_height()
+                ax.text(bar.get_x() + bar.get_width()/2, height + 2, f"{score}%", 
+                        ha='center', va='bottom', color='black', fontsize=10, fontweight='bold')
+            st.pyplot(fig)
+
         st.markdown("</div>", unsafe_allow_html=True)
-
-        # --- Clean Dashboard-Style Bar Graph ---
-        fig, ax = plt.subplots(figsize=(2, 2.5))  # perfectly balanced small size
-        bars = ax.bar(["ATS Match %"], [score], color="#007BFF", width=0.5)
-
-        # White background for both figure and axis
-        fig.patch.set_facecolor("white")
-        ax.set_facecolor("white")
-
-        # Minimal clean chart
-        ax.set_ylim(0, 100)
-        ax.set_ylabel("Score (%)", fontsize=8, color="black")
-        ax.tick_params(axis='x', colors='black', labelsize=9)
-        ax.tick_params(axis='y', colors='black', labelsize=8)
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-
-        # Value label on the bar
-        for bar in bars:
-            height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width()/2, height + 2, f"{score}%", 
-                    ha='center', va='bottom', color='black', fontsize=10, fontweight='bold')
-
-        st.pyplot(fig)
 
         # Missing Keywords Section
         st.markdown("<div class='card'><h4>🔍 Missing Keywords:</h4>", unsafe_allow_html=True)
@@ -155,7 +159,6 @@ elif page == "📊 Resume Scanner":
             st.write("✅ Your resume covers all key skills!")
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # Suggestion
         st.info(f"💡 Suggestion: Add missing keywords related to {jd_option} to boost your ATS score.")
 
 # ==============================
@@ -172,17 +175,14 @@ elif page == "💬 Chat Assistant":
 
     if user_input:
         st.session_state.chat_history.append(("You", user_input))
-
-        # Simple Rule-Based AI
         if "resume" in user_input.lower():
             reply = "Your resume should highlight your technical skills, certifications, and relevant projects."
         elif "skill" in user_input.lower():
-            reply = "Focus on Python, SQL, and data visualization tools like Power BI or Tableau for analytics roles."
+            reply = "Focus on Python, SQL, and visualization tools like Power BI or Tableau for analytics roles."
         elif "interview" in user_input.lower():
             reply = "Prepare for HR and technical rounds. Be ready to explain your projects clearly."
         else:
-            reply = "I'm your career buddy! Try asking about resume tips, interview advice, or skill growth."
-
+            reply = "I'm your career buddy! Ask about resume tips, interview advice, or skill growth."
         st.session_state.chat_history.append(("Nuvora 💫", reply))
 
     for sender, msg in st.session_state.chat_history:
