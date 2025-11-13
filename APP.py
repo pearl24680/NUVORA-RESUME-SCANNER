@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 # ==============================
 # 🎨 PAGE CONFIGURATION
 # ==============================
-st.set_page_config(page_title="💫 Nuvora Resume Scanner", page_icon="💼", layout="wide")
+st.set_page_config(page_title="💫 Nuvora Resume AI Scanner", page_icon="💼", layout="wide")
 
 # --- Custom Styling ---
 st.markdown("""
