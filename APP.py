@@ -123,17 +123,31 @@ elif page == "📊 Resume Scanner":
         col3.metric("⚠️ Missing", len(missing))
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # Smaller Graph
-        fig, ax = plt.subplots(figsize=(2.5, 2.5))
-        ax.bar(["Match %"], [score], color="#00C6FF")
-        ax.set_ylim(0, 100)
-        ax.set_ylabel("Selection %")
-        ax.set_facecolor("#0A0F24")
-        fig.patch.set_facecolor("#0A0F24")
-        st.pyplot(fig)
+        
+       # --- Smaller & White ATS Bar Graph ---
+fig, ax = plt.subplots(figsize=(2, 2))  # Smaller graph size
+ax.bar(["ATS Match %"], [score], color="#0072FF", width=0.4)
 
-        st.success("✅ Top Matching Skills: " + ", ".join(list(matched)) if matched else "No matching skills found.")
-        st.warning("⚠️ Missing Skills: " + ", ".join(list(missing)) if missing else "Perfect Match!")
+# White background and clean style
+ax.set_facecolor("white")
+fig.patch.set_facecolor("white")
+
+# Remove top/right borders for a clean look
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+# Labels
+ax.set_ylim(0, 100)
+ax.set_ylabel("Score (%)", color="black", fontsize=9)
+ax.tick_params(axis='x', colors='black')
+ax.tick_params(axis='y', colors='black')
+
+# Show the score on the bar
+ax.text(0, score + 2, f"{score}%", ha='center', color='black', fontweight='bold')
+
+# Display in Streamlit
+st.pyplot(fig)
+
 
         # Suggestions
         st.info(f"💡 Suggestion: Improve your resume by adding missing keywords related to {jd_option} role. Focus on: {', '.join(list(missing)[:5]) if missing else 'No missing skills!'}")
