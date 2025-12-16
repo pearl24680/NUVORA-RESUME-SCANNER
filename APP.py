@@ -2,7 +2,6 @@ import streamlit as st
 import pdfplumber
 import docx
 import re
-import matplotlib.pyplot as plt
 
 # ==============================
 # 🎨 PAGE CONFIG
@@ -18,23 +17,58 @@ st.set_page_config(
 # ==============================
 st.markdown("""
 <style>
-body, .stApp { background-color: #0A0F24; color: #EAEAEA; font-family: Poppins; }
+body, .stApp {
+    background-color: #0A0F24;
+    color: #EAEAEA;
+    font-family: Poppins;
+}
+
+/* Title Gradient */
 .title {
-    font-size: 42px; font-weight: 800;
+    font-size: 42px;
+    font-weight: 800;
     background: linear-gradient(90deg, #00C6FF, #0072FF);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-align: center;
 }
+
+/* Cards */
 .card {
     background: linear-gradient(145deg, #1B1F3B, #101325);
     padding: 25px;
     border-radius: 20px;
     margin-bottom: 15px;
 }
+
+/* Buttons */
 .stButton>button {
     background: linear-gradient(90deg, #0072FF, #00C6FF);
-    color: white; font-weight: bold;
+    color: white; 
+    font-weight: bold;
+}
+
+/* Chat bubbles */
+.user-msg {
+    background-color: #0072FF;
+    color: white;
+    padding: 12px 15px;
+    border-radius: 20px 20px 0 20px;
+    text-align: right;
+    max-width: 70%;
+    margin-left: 30%;
+    margin-bottom: 10px;
+    word-wrap: break-word;
+}
+.bot-msg {
+    background-color: #1B1F3B;
+    color: #EAEAEA;
+    padding: 12px 15px;
+    border-radius: 20px 20px 20px 0;
+    max-width: 70%;
+    margin-right: 30%;
+    margin-bottom: 10px;
+    word-wrap: break-word;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -84,12 +118,12 @@ if page == "🏠 Home":
     st.markdown("<p class='title'>💫 Nuvora AI</p>", unsafe_allow_html=True)
     st.markdown("""
     <div class='card'>
-    <h3>📌 Project Overview</h3>
-    <ul>
-    <li>ATS Resume Scanner</li>
-    <li>Career Guidance Chat</li>
-    <li>Full Course Roadmaps</li>
-    </ul>
+        <h3>📌 Project Overview</h3>
+        <ul>
+            <li>ATS Resume Scanner</li>
+            <li>Career Guidance Chat</li>
+            <li>Full Course Roadmaps</li>
+        </ul>
     </div>
     """, unsafe_allow_html=True)
 
@@ -102,7 +136,6 @@ elif page == "📊 Resume Scanner":
     col1, col2 = st.columns(2)
     with col1:
         resume_file = st.file_uploader("Upload Resume", type=["pdf", "docx"])
-
     with col2:
         jd = st.selectbox(
             "Select Job Role",
@@ -118,7 +151,6 @@ elif page == "📊 Resume Scanner":
     if resume_file:
         resume_text = extract_text(resume_file)
         score, matched, missing = calculate_ats_score(resume_text, jd_data[jd])
-
         st.markdown(f"<div class='card'><h3>ATS Score: {score}%</h3></div>",
                     unsafe_allow_html=True)
 
@@ -131,6 +163,7 @@ elif page == "🎓 Career & Course Chat":
     if "history" not in st.session_state:
         st.session_state.history = []
 
+    # Chat input
     user_input = st.text_input(
         "Student Query",
         placeholder="Example: Data Science full course"
@@ -204,9 +237,14 @@ elif page == "🎓 Career & Course Chat":
 
         st.session_state.history.append(("Nuvora 🎓", reply))
 
-    for role, text in st.session_state.history:
-        st.markdown(f"<div class='card'><b>{role}:</b><br>{text}</div>",
-                    unsafe_allow_html=True)
+    # Display chat with bubbles
+    chat_placeholder = st.container()
+    with chat_placeholder:
+        for role, text in st.session_state.history:
+            if role == "Student":
+                st.markdown(f"<div class='user-msg'>{text}</div>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<div class='bot-msg'>{text}</div>", unsafe_allow_html=True)
 
 # ==============================
 # FOOTER
@@ -215,4 +253,3 @@ st.markdown(
     "<hr><center>Developed with ❤️ by Pearl & Vasu</center>",
     unsafe_allow_html=True
 )
-
