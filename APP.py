@@ -4,7 +4,7 @@ import docx
 import re
 
 # ==============================
-# 🎨 PAGE CONFIG
+# PAGE CONFIG
 # ==============================
 st.set_page_config(
     page_title="💫 Nuvora Resume Scanner",
@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 # ==============================
-# 🎨 CUSTOM CSS
+# CUSTOM CSS
 # ==============================
 st.markdown("""
 <style>
@@ -31,21 +31,6 @@ body, .stApp {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-align: center;
-}
-
-/* Cards */
-.card {
-    background: linear-gradient(145deg, #1B1F3B, #101325);
-    padding: 25px;
-    border-radius: 20px;
-    margin-bottom: 15px;
-}
-
-/* Buttons */
-.stButton>button {
-    background: linear-gradient(90deg, #0072FF, #00C6FF);
-    color: white; 
-    font-weight: bold;
 }
 
 /* Chat bubbles */
@@ -73,18 +58,26 @@ body, .stApp {
 
 /* Scrollable chat container */
 .chat-container {
-    height: 400px;
+    height: 500px;
     overflow-y: auto;
     padding: 10px;
     border: 1px solid #333;
     border-radius: 10px;
     background-color: #0A0F24;
+    margin-bottom: 10px;
+}
+
+/* Send button */
+.stButton>button {
+    background: linear-gradient(90deg, #0072FF, #00C6FF);
+    color: white; 
+    font-weight: bold;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# 📂 FILE FUNCTIONS
+# FILE FUNCTIONS
 # ==============================
 def extract_text_from_pdf(file):
     text = ""
@@ -112,7 +105,7 @@ def calculate_ats_score(resume, jd):
     return round(score, 2), match, jd_words - match
 
 # ==============================
-# 🧭 SIDEBAR
+# SIDEBAR
 # ==============================
 st.sidebar.title("💫 Nuvora AI")
 page = st.sidebar.radio(
@@ -122,7 +115,7 @@ page = st.sidebar.radio(
 st.sidebar.caption("Final Year Project | Pearl & Vasu")
 
 # ==============================
-# 🏠 HOME
+# HOME
 # ==============================
 if page == "🏠 Home":
     st.markdown("<p class='title'>💫 Nuvora AI</p>", unsafe_allow_html=True)
@@ -138,7 +131,7 @@ if page == "🏠 Home":
     """, unsafe_allow_html=True)
 
 # ==============================
-# 📊 RESUME SCANNER
+# RESUME SCANNER
 # ==============================
 elif page == "📊 Resume Scanner":
     st.markdown("<p class='title'>📊 Resume Analyzer</p>", unsafe_allow_html=True)
@@ -165,7 +158,7 @@ elif page == "📊 Resume Scanner":
                     unsafe_allow_html=True)
 
 # ==============================
-# 🎓 CAREER & COURSE CHAT
+# CAREER CHAT
 # ==============================
 elif page == "🎓 Career & Course Chat":
     st.markdown("<p class='title'>🎓 Nuvora Education Chat</p>", unsafe_allow_html=True)
@@ -174,90 +167,67 @@ elif page == "🎓 Career & Course Chat":
         st.session_state.history = []
 
     # Scrollable chat container
-    st.markdown("<div class='chat-container'>", unsafe_allow_html=True)
-    for role, text in st.session_state.history:
-        if role == "Student":
-            st.markdown(f"<div class='user-msg'>{text}</div>", unsafe_allow_html=True)
-        else:
-            st.markdown(f"<div class='bot-msg'>{text}</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    chat_placeholder = st.empty()
+    with chat_placeholder.container():
+        for role, text in st.session_state.history:
+            if role == "Student":
+                st.markdown(f"<div class='user-msg'>{text}</div>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<div class='bot-msg'>{text}</div>", unsafe_allow_html=True)
 
-    # Input box always at the bottom
-    user_input = st.text_input("Type your message here...", key="input")
+    # Input form at bottom
+    with st.form(key="chat_form", clear_on_submit=True):
+        user_input = st.text_input("Type your message here...")
+        submit_button = st.form_submit_button("Send")
 
-    if user_input:
-        msg = user_input.lower()
-        st.session_state.history.append(("Student", user_input))
+        if submit_button and user_input:
+            msg = user_input.lower()
+            st.session_state.history.append(("Student", user_input))
 
-        # ===== DATA SCIENCE =====
-        if "data science" in msg or "data scientist" in msg:
-            reply = (
-                "🎓 FULL DATA SCIENCE COURSE\n\n"
-                "📘 Phase 1 – Basics\n"
-                "- Python Basics\n- Statistics\n- Linear Algebra\n\n"
-                "📘 Phase 2 – Data Handling\n"
-                "- Pandas\n- NumPy\n- Data Cleaning\n\n"
-                "📘 Phase 3 – Machine Learning\n"
-                "- Regression\n- Classification\n- Clustering\n\n"
-                "📘 Phase 4 – Advanced\n"
-                "- Deep Learning\n- NLP\n- Projects"
-            )
+            # Logic for responses
+            if "data science" in msg or "data scientist" in msg:
+                reply = (
+                    "🎓 FULL DATA SCIENCE COURSE\n\n"
+                    "📘 Phase 1 – Basics\n- Python Basics\n- Statistics\n- Linear Algebra\n\n"
+                    "📘 Phase 2 – Data Handling\n- Pandas\n- NumPy\n- Data Cleaning\n\n"
+                    "📘 Phase 3 – Machine Learning\n- Regression\n- Classification\n- Clustering\n\n"
+                    "📘 Phase 4 – Advanced\n- Deep Learning\n- NLP\n- Projects"
+                )
+            elif "data analyst" in msg or "data analysis" in msg:
+                reply = (
+                    "🎓 FULL DATA ANALYST COURSE\n\n"
+                    "📘 Phase 1\n- Excel\n- Statistics\n\n"
+                    "📘 Phase 2\n- SQL\n- Python\n\n"
+                    "📘 Phase 3\n- Power BI / Tableau\n- Dashboards\n\n"
+                    "📘 Phase 4\n- Real-world projects"
+                )
+            elif "web developer" in msg or "web development" in msg:
+                reply = (
+                    "🎓 FULL WEB DEVELOPMENT COURSE\n\n"
+                    "📘 Frontend\n- HTML\n- CSS\n- JavaScript\n\n"
+                    "📘 Backend\n- Node.js\n- Databases\n\n"
+                    "📘 Projects\n- Portfolio websites"
+                )
+            elif "resume" in msg or "cv" in msg:
+                reply = (
+                    "📄 RESUME GUIDELINES\n- 1–2 pages\n- Skills + Projects\n- ATS-friendly format"
+                )
+            elif "interview" in msg:
+                reply = (
+                    "🎤 INTERVIEW PREP\n- Revise concepts\n- Explain projects\n- Practice mock interviews"
+                )
+            elif "hi" in msg or "hello" in msg:
+                reply = "👋 Hello! Ask me about courses, skills, or career paths."
+            else:
+                reply = (
+                    "ℹ️ Ask education-related queries only:\n"
+                    "- Data Science\n- Data Analyst\n- Web Development\n- Resume\n- Interview"
+                )
 
-        # ===== DATA ANALYST =====
-        elif "data analyst" in msg or "data analysis" in msg:
-            reply = (
-                "🎓 FULL DATA ANALYST COURSE\n\n"
-                "📘 Phase 1\n- Excel\n- Statistics\n\n"
-                "📘 Phase 2\n- SQL\n- Python\n\n"
-                "📘 Phase 3\n- Power BI / Tableau\n- Dashboards\n\n"
-                "📘 Phase 4\n- Real-world projects"
-            )
-
-        # ===== WEB DEVELOPER =====
-        elif "web developer" in msg or "web development" in msg:
-            reply = (
-                "🎓 FULL WEB DEVELOPMENT COURSE\n\n"
-                "📘 Frontend\n- HTML\n- CSS\n- JavaScript\n\n"
-                "📘 Backend\n- Node.js\n- Databases\n\n"
-                "📘 Projects\n- Portfolio websites"
-            )
-
-        # ===== RESUME =====
-        elif "resume" in msg or "cv" in msg:
-            reply = (
-                "📄 RESUME GUIDELINES\n"
-                "- 1–2 pages\n"
-                "- Skills + Projects\n"
-                "- ATS-friendly format"
-            )
-
-        # ===== INTERVIEW =====
-        elif "interview" in msg:
-            reply = (
-                "🎤 INTERVIEW PREP\n"
-                "- Revise concepts\n"
-                "- Explain projects\n"
-                "- Practice mock interviews"
-            )
-
-        # ===== GREETING =====
-        elif "hi" in msg or "hello" in msg:
-            reply = "👋 Hello! Ask me about courses, skills, or career paths."
-
-        else:
-            reply = (
-                "ℹ️ Ask education-related queries only:\n"
-                "- Data Science\n- Data Analyst\n- Web Development\n"
-                "- Resume\n- Interview"
-            )
-
-        st.session_state.history.append(("Nuvora 🎓", reply))
-        st.experimental_rerun()  # Refresh page to show new messages at bottom
+            st.session_state.history.append(("Nuvora 🎓", reply))
+            st.experimental_rerun()  # Refresh to show new messages at bottom
 
 # ==============================
 # FOOTER
 # ==============================
-st.markdown(
-    "<hr><center>Developed with ❤️ by Pearl & Vasu</center>",
-    unsafe_allow_html=True
-)
+st.markdown("<hr><center>Developed with ❤️ by Pearl & Vasu</center>", unsafe_allow_html=True)
