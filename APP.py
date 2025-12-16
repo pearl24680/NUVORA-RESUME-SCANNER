@@ -5,79 +5,90 @@ import re
 import matplotlib.pyplot as plt
 
 # ==============================
-# 🎨 PAGE CONFIGURATION
+# 🎨 PAGE CONFIG
 # ==============================
-st.set_page_config(page_title="💫 Nuvora Resume Scanner", page_icon="💼", layout="wide")
+st.set_page_config(
+    page_title="💫 Nuvora Resume Scanner",
+    page_icon="💼",
+    layout="wide"
+)
 
-# --- Custom Styling ---
+# ==============================
+# 🎨 CUSTOM CSS
+# ==============================
 st.markdown("""
 <style>
-body, .stApp { background-color: #0A0F24; color: #EAEAEA; font-family: 'Poppins', sans-serif; }
-.title { font-size: 42px; font-weight: 800; background: linear-gradient(90deg, #00C6FF, #0072FF);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
-.card { background: linear-gradient(145deg, #1B1F3B, #101325);
-    padding: 25px; border-radius: 20px; margin-bottom: 20px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-.mini-card {
-    background: #13193B;
-    padding: 20px; border-radius: 15px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+body, .stApp { background-color: #0A0F24; color: #EAEAEA; font-family: Poppins; }
+.title {
+    font-size: 42px; font-weight: 800;
+    background: linear-gradient(90deg, #00C6FF, #0072FF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     text-align: center;
 }
-.stButton>button { background: linear-gradient(90deg, #0072FF, #00C6FF);
-    color: white; border-radius: 10px; border: none; font-weight: bold; }
+.card {
+    background: linear-gradient(145deg, #1B1F3B, #101325);
+    padding: 25px;
+    border-radius: 20px;
+    margin-bottom: 15px;
+}
+.stButton>button {
+    background: linear-gradient(90deg, #0072FF, #00C6FF);
+    color: white; font-weight: bold;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# 📂 FILE HANDLING FUNCTIONS
+# 📂 FILE FUNCTIONS
 # ==============================
-def extract_text_from_pdf(uploaded_file):
+def extract_text_from_pdf(file):
     text = ""
-    with pdfplumber.open(uploaded_file) as pdf:
+    with pdfplumber.open(file) as pdf:
         for page in pdf.pages:
             text += page.extract_text() or ""
     return text
 
-def extract_text_from_docx(uploaded_file):
-    doc = docx.Document(uploaded_file)
-    return "\n".join([para.text for para in doc.paragraphs])
+def extract_text_from_docx(file):
+    doc = docx.Document(file)
+    return "\n".join(p.text for p in doc.paragraphs)
 
-def extract_text(uploaded_file):
-    if uploaded_file.name.endswith(".pdf"):
-        return extract_text_from_pdf(uploaded_file)
-    elif uploaded_file.name.endswith(".docx"):
-        return extract_text_from_docx(uploaded_file)
-    else:
-        return ""
+def extract_text(file):
+    if file.name.endswith(".pdf"):
+        return extract_text_from_pdf(file)
+    elif file.name.endswith(".docx"):
+        return extract_text_from_docx(file)
+    return ""
 
-def calculate_ats_score(resume_text, job_desc):
-    resume_words = set(re.findall(r'\b\w+\b', resume_text.lower()))
-    jd_words = set(re.findall(r'\b\w+\b', job_desc.lower()))
-    matched = resume_words.intersection(jd_words)
-    score = (len(matched) / len(jd_words)) * 100 if len(jd_words) > 0 else 0
-    missing = jd_words - resume_words
-    return round(score, 2), matched, missing
+def calculate_ats_score(resume, jd):
+    resume_words = set(re.findall(r"\w+", resume.lower()))
+    jd_words = set(re.findall(r"\w+", jd.lower()))
+    match = resume_words.intersection(jd_words)
+    score = (len(match) / len(jd_words)) * 100 if jd_words else 0
+    return round(score, 2), match, jd_words - match
 
 # ==============================
 # 🧭 SIDEBAR
 # ==============================
 st.sidebar.title("💫 Nuvora AI")
-page = st.sidebar.radio("Navigate to:", ["🏠 Home", "📊 Resume Scanner", "🎓 Career Chat"])
-st.sidebar.caption("Final Year Project – Pearl Sethi")
+page = st.sidebar.radio(
+    "Navigate",
+    ["🏠 Home", "📊 Resume Scanner", "🎓 Career & Course Chat"]
+)
+st.sidebar.caption("Final Year Project | Pearl & Vasu")
 
 # ==============================
 # 🏠 HOME
 # ==============================
 if page == "🏠 Home":
-    st.markdown('<p class="title">💫 Nuvora AI – Resume Intelligence Dashboard</p>', unsafe_allow_html=True)
+    st.markdown("<p class='title'>💫 Nuvora AI</p>", unsafe_allow_html=True)
     st.markdown("""
     <div class='card'>
-    <h3>🚀 Project Overview</h3>
+    <h3>📌 Project Overview</h3>
     <ul>
-    <li>ATS Resume Scoring</li>
-    <li>Skill Gap Analysis</li>
-    <li>Education & Career Chat Assistant</li>
+    <li>ATS Resume Scanner</li>
+    <li>Career Guidance Chat</li>
+    <li>Full Course Roadmaps</li>
     </ul>
     </div>
     """, unsafe_allow_html=True)
@@ -86,84 +97,122 @@ if page == "🏠 Home":
 # 📊 RESUME SCANNER
 # ==============================
 elif page == "📊 Resume Scanner":
-    st.markdown('<p class="title">📈 Resume & Job Description Analyzer</p>', unsafe_allow_html=True)
+    st.markdown("<p class='title'>📊 Resume Analyzer</p>", unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
-
     with col1:
-        resume_file = st.file_uploader("📄 Upload Resume (PDF/DOCX)", type=["pdf", "docx"])
+        resume_file = st.file_uploader("Upload Resume", type=["pdf", "docx"])
 
     with col2:
-        jd_option = st.selectbox("🎯 Choose Job Description",
-            ["-- Select --", "Data Analyst", "Data Scientist", "Web Developer", "Software Developer"])
+        jd = st.selectbox(
+            "Select Job Role",
+            ["Data Analyst", "Data Scientist", "Web Developer"]
+        )
 
-        jd_presets = {
-            "Data Analyst": "Python SQL Excel Power BI Tableau Statistics Data Visualization",
-            "Data Scientist": "Python Machine Learning Statistics Pandas NumPy Scikit-learn",
-            "Web Developer": "HTML CSS JavaScript React Node Git APIs",
-            "Software Developer": "Java C++ OOP Data Structures Algorithms Databases"
-        }
+    jd_data = {
+        "Data Analyst": "python sql excel statistics power bi tableau",
+        "Data Scientist": "python machine learning statistics pandas numpy",
+        "Web Developer": "html css javascript react node"
+    }
 
-        job_desc = jd_presets.get(jd_option, "")
-
-    if resume_file and job_desc:
+    if resume_file:
         resume_text = extract_text(resume_file)
-        score, matched, missing = calculate_ats_score(resume_text, job_desc)
+        score, matched, missing = calculate_ats_score(resume_text, jd_data[jd])
 
-        st.markdown("<div class='card'><h4>📊 ATS Result</h4>", unsafe_allow_html=True)
-        c1, c2, c3 = st.columns(3)
-
-        with c1:
-            st.markdown(f"<div class='mini-card'><h3>{score}%</h3><p>ATS Score</p></div>", unsafe_allow_html=True)
-        with c2:
-            st.markdown(f"<div class='mini-card'><h3>{len(matched)}</h3><p>Matched Skills</p></div>", unsafe_allow_html=True)
-        with c3:
-            st.markdown(f"<div class='mini-card'><h3>{len(missing)}</h3><p>Missing Skills</p></div>", unsafe_allow_html=True)
-
-        fig, ax = plt.subplots()
-        ax.bar(["ATS Score"], [score])
-        ax.set_ylim(0, 100)
-        st.pyplot(fig)
-
-        st.markdown("<div class='card'><b>Missing Keywords:</b></div>", unsafe_allow_html=True)
-        st.write(", ".join(list(missing)[:10]))
+        st.markdown(f"<div class='card'><h3>ATS Score: {score}%</h3></div>",
+                    unsafe_allow_html=True)
 
 # ==============================
-# 🎓 EDUCATION & CAREER CHAT
+# 🎓 CAREER & COURSE CHAT
 # ==============================
-elif page == "🎓 Career Chat":
-    st.markdown('<p class="title">🎓 Career & Education Chat</p>', unsafe_allow_html=True)
+elif page == "🎓 Career & Course Chat":
+    st.markdown("<p class='title'>🎓 Nuvora Education Chat</p>", unsafe_allow_html=True)
 
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
+    if "history" not in st.session_state:
+        st.session_state.history = []
 
-    user_input = st.text_input("Student Query:", placeholder="Example: Data Analyst skills")
+    user_input = st.text_input(
+        "Student Query",
+        placeholder="Example: Data Science full course"
+    )
 
     if user_input:
-        st.session_state.chat_history.append(("Student", user_input))
         msg = user_input.lower()
+        st.session_state.history.append(("Student", user_input))
 
-        if "data analyst" in msg:
-            reply = "Data Analyst needs Python, SQL, Excel, Power BI/Tableau, Statistics and projects."
-        elif "data scientist" in msg:
-            reply = "Data Scientist needs ML, Python, Statistics, Pandas, NumPy and higher studies."
-        elif "web developer" in msg:
-            reply = "Web Developer needs HTML, CSS, JS, React, backend basics and projects."
-        elif "resume" in msg:
-            reply = "Student resume should include skills, projects, internships and ATS keywords."
+        # ===== DATA SCIENCE =====
+        if "data science" in msg or "data scientist" in msg:
+            reply = (
+                "🎓 FULL DATA SCIENCE COURSE\n\n"
+                "📘 Phase 1 – Basics\n"
+                "- Python Basics\n- Statistics\n- Linear Algebra\n\n"
+                "📘 Phase 2 – Data Handling\n"
+                "- Pandas\n- NumPy\n- Data Cleaning\n\n"
+                "📘 Phase 3 – Machine Learning\n"
+                "- Regression\n- Classification\n- Clustering\n\n"
+                "📘 Phase 4 – Advanced\n"
+                "- Deep Learning\n- NLP\n- Projects"
+            )
+
+        # ===== DATA ANALYST =====
+        elif "data analyst" in msg or "data analysis" in msg:
+            reply = (
+                "🎓 FULL DATA ANALYST COURSE\n\n"
+                "📘 Phase 1\n- Excel\n- Statistics\n\n"
+                "📘 Phase 2\n- SQL\n- Python\n\n"
+                "📘 Phase 3\n- Power BI / Tableau\n- Dashboards\n\n"
+                "📘 Phase 4\n- Real-world projects"
+            )
+
+        # ===== WEB DEVELOPER =====
+        elif "web developer" in msg or "web development" in msg:
+            reply = (
+                "🎓 FULL WEB DEVELOPMENT COURSE\n\n"
+                "📘 Frontend\n- HTML\n- CSS\n- JavaScript\n\n"
+                "📘 Backend\n- Node.js\n- Databases\n\n"
+                "📘 Projects\n- Portfolio websites"
+            )
+
+        # ===== RESUME =====
+        elif "resume" in msg or "cv" in msg:
+            reply = (
+                "📄 RESUME GUIDELINES\n"
+                "- 1–2 pages\n"
+                "- Skills + Projects\n"
+                "- ATS-friendly format"
+            )
+
+        # ===== INTERVIEW =====
         elif "interview" in msg:
-            reply = "Prepare core subjects, project explanation and practice aptitude."
-        elif "skill" in msg:
-            reply = "Learn one skill deeply, practice projects and maintain GitHub."
+            reply = (
+                "🎤 INTERVIEW PREP\n"
+                "- Revise concepts\n"
+                "- Explain projects\n"
+                "- Practice mock interviews"
+            )
+
+        # ===== GREETING =====
+        elif "hi" in msg or "hello" in msg:
+            reply = "👋 Hello! Ask me about courses, skills, or career paths."
+
         else:
-            reply = "Ask education or career related questions only."
+            reply = (
+                "ℹ️ Ask education-related queries only:\n"
+                "- Data Science\n- Data Analyst\n- Web Development\n"
+                "- Resume\n- Interview"
+            )
 
-        st.session_state.chat_history.append(("Nuvora 🎓", reply))
+        st.session_state.history.append(("Nuvora 🎓", reply))
 
-    for sender, msg in st.session_state.chat_history:
-        st.markdown(f"<div class='card'><b>{sender}:</b><br>{msg}</div>", unsafe_allow_html=True)
+    for role, text in st.session_state.history:
+        st.markdown(f"<div class='card'><b>{role}:</b><br>{text}</div>",
+                    unsafe_allow_html=True)
 
 # ==============================
-# 🧾 FOOTER
+# FOOTER
 # ==============================
-st.markdown("<hr><p style='text-align:center;color:gray;'>Developed by Pearl Sethi</p>", unsafe_allow_html=True)
+st.markdown(
+    "<hr><center>Developed with ❤️ by Pearl & Vasu</center>",
+    unsafe_allow_html=True
+)
+
