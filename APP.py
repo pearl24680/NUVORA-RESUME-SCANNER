@@ -164,29 +164,48 @@ elif page == "📊 Resume Scanner":
 # ==============================
 # 💬 CHAT ASSISTANT
 # ==============================
-elif page == "💬 Chat Assistant":
+elif page=="💬 Chat Assistant":
     st.markdown('<p class="title">💬 Nuvora Chat</p>', unsafe_allow_html=True)
-    st.markdown("<div class='card'>Chat with Nuvora for resume tips, interview prep, and skill advice!</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card'>Chat with Nuvora for resume tips, interview prep, skill growth, or code queries!</div>", unsafe_allow_html=True)
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    user_input = st.text_input("💭 You:", placeholder="Ask me anything about career or resume...")
+    # Scrollable WhatsApp-style chat container
+    chat_placeholder = st.empty()
+    with chat_placeholder.container():
+        st.markdown("<div class='chat-container'>", unsafe_allow_html=True)
+        for sender, msg in st.session_state.chat_history:
+            if sender=="You":
+                st.markdown(f"<div class='user-msg'>{msg}</div>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<div class='bot-msg'>{msg}</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    if user_input:
-        st.session_state.chat_history.append(("You", user_input))
-        if "resume" in user_input.lower():
-            reply = "Your resume should highlight your technical skills, certifications, and relevant projects."
-        elif "skill" in user_input.lower():
-            reply = "Focus on Python, SQL, and visualization tools like Power BI or Tableau for analytics roles."
-        elif "interview" in user_input.lower():
-            reply = "Prepare for HR and technical rounds. Be ready to explain your projects clearly."
-        else:
-            reply = "I'm your career buddy! Ask about resume tips, interview advice, or skill growth."
-        st.session_state.chat_history.append(("Nuvora 💫", reply))
+    # Input form at bottom
+    with st.form(key="chat_form", clear_on_submit=True):
+        col1, col2 = st.columns([8,1])
+        with col1:
+            user_input = st.text_input("💭 Type your message here...")
+        with col2:
+            submit_btn = st.form_submit_button("Send")
 
-    for sender, msg in st.session_state.chat_history:
-        st.markdown(f"<div class='card'><b>{sender}:</b><br>{msg}</div>", unsafe_allow_html=True)
+        if submit_btn and user_input:
+            st.session_state.chat_history.append(("You", user_input))
+            msg = user_input.lower()
+            if "resume" in msg:
+                reply = "Your resume should highlight technical skills, certifications, and projects."
+            elif "skill" in msg:
+                reply = "Focus on Python, SQL, Power BI/Tableau for analytics roles."
+            elif "interview" in msg:
+                reply = "Prepare for HR & technical rounds. Be ready to explain your projects clearly."
+            elif any(k in msg for k in ["python","javascript","code","loop","function"]):
+                reply = "💻 CODE HELP: Ask me about Python/JS examples, loops, functions, or concepts."
+            else:
+                reply = "I'm your career buddy! Ask about resume, interview, skills, or code."
+            st.session_state.chat_history.append(("Nuvora 💫", reply))
+            st.experimental_rerun()
+
 
 # ==============================
 # 🧾 FOOTER
