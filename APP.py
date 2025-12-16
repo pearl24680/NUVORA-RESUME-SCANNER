@@ -33,6 +33,14 @@ body, .stApp {
     text-align: center;
 }
 
+/* Cards */
+.card {
+    background: linear-gradient(145deg, #1B1F3B, #101325);
+    padding: 25px;
+    border-radius: 20px;
+    margin-bottom: 15px;
+}
+
 /* Chat bubbles */
 .user-msg {
     background-color: #0072FF;
@@ -158,7 +166,7 @@ elif page == "📊 Resume Scanner":
                     unsafe_allow_html=True)
 
 # ==============================
-# CAREER CHAT
+# CAREER & COURSE CHAT
 # ==============================
 elif page == "🎓 Career & Course Chat":
     st.markdown("<p class='title'>🎓 Nuvora Education Chat</p>", unsafe_allow_html=True)
@@ -184,7 +192,7 @@ elif page == "🎓 Career & Course Chat":
             msg = user_input.lower()
             st.session_state.history.append(("Student", user_input))
 
-            # Logic for responses
+            # ===== DATA SCIENCE =====
             if "data science" in msg or "data scientist" in msg:
                 reply = (
                     "🎓 FULL DATA SCIENCE COURSE\n\n"
@@ -193,6 +201,7 @@ elif page == "🎓 Career & Course Chat":
                     "📘 Phase 3 – Machine Learning\n- Regression\n- Classification\n- Clustering\n\n"
                     "📘 Phase 4 – Advanced\n- Deep Learning\n- NLP\n- Projects"
                 )
+            # ===== DATA ANALYST =====
             elif "data analyst" in msg or "data analysis" in msg:
                 reply = (
                     "🎓 FULL DATA ANALYST COURSE\n\n"
@@ -201,6 +210,7 @@ elif page == "🎓 Career & Course Chat":
                     "📘 Phase 3\n- Power BI / Tableau\n- Dashboards\n\n"
                     "📘 Phase 4\n- Real-world projects"
                 )
+            # ===== WEB DEVELOPER =====
             elif "web developer" in msg or "web development" in msg:
                 reply = (
                     "🎓 FULL WEB DEVELOPMENT COURSE\n\n"
@@ -208,20 +218,34 @@ elif page == "🎓 Career & Course Chat":
                     "📘 Backend\n- Node.js\n- Databases\n\n"
                     "📘 Projects\n- Portfolio websites"
                 )
+            # ===== RESUME =====
             elif "resume" in msg or "cv" in msg:
                 reply = (
                     "📄 RESUME GUIDELINES\n- 1–2 pages\n- Skills + Projects\n- ATS-friendly format"
                 )
+            # ===== INTERVIEW =====
             elif "interview" in msg:
                 reply = (
                     "🎤 INTERVIEW PREP\n- Revise concepts\n- Explain projects\n- Practice mock interviews"
                 )
+            # ===== CODE QUERIES =====
+            elif any(keyword in msg for keyword in ["python", "javascript", "code", "programming", "function", "loop"]):
+                reply = (
+                    "💻 CODE HELP\n"
+                    "I can help with code examples and explanations.\n\n"
+                    "Example: \n"
+                    "- Python loop: `for i in range(5): print(i)`\n"
+                    "- JavaScript function: `function greet(){console.log('Hello');}`\n"
+                    "You can ask me to explain any code snippet or concept."
+                )
+            # ===== GREETING =====
             elif "hi" in msg or "hello" in msg:
-                reply = "👋 Hello! Ask me about courses, skills, or career paths."
+                reply = "👋 Hello! Ask me about courses, skills, career paths, or coding questions."
             else:
                 reply = (
-                    "ℹ️ Ask education-related queries only:\n"
-                    "- Data Science\n- Data Analyst\n- Web Development\n- Resume\n- Interview"
+                    "ℹ️ Ask education-related queries or code questions only:\n"
+                    "- Data Science\n- Data Analyst\n- Web Development\n"
+                    "- Resume\n- Interview\n- Programming / Code examples"
                 )
 
             st.session_state.history.append(("Nuvora 🎓", reply))
