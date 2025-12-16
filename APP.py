@@ -11,22 +11,22 @@ st.set_page_config(page_title="💫 Nuvora Resume Scanner", page_icon="💼", la
 
 # --- Custom Styling ---
 st.markdown("""
-    <style>
-    body, .stApp { background-color: #0A0F24; color: #EAEAEA; font-family: 'Poppins', sans-serif; }
-    .title { font-size: 42px; font-weight: 800; background: linear-gradient(90deg, #00C6FF, #0072FF);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
-    .card { background: linear-gradient(145deg, #1B1F3B, #101325);
-        padding: 25px; border-radius: 20px; margin-bottom: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-    .mini-card {
-        background: #13193B;
-        padding: 20px; border-radius: 15px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-        text-align: center;
-    }
-    .stButton>button { background: linear-gradient(90deg, #0072FF, #00C6FF);
-        color: white; border-radius: 10px; border: none; font-weight: bold; }
-    </style>
+<style>
+body, .stApp { background-color: #0A0F24; color: #EAEAEA; font-family: 'Poppins', sans-serif; }
+.title { font-size: 42px; font-weight: 800; background: linear-gradient(90deg, #00C6FF, #0072FF);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
+.card { background: linear-gradient(145deg, #1B1F3B, #101325);
+    padding: 25px; border-radius: 20px; margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+.mini-card {
+    background: #13193B;
+    padding: 20px; border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    text-align: center;
+}
+.stButton>button { background: linear-gradient(90deg, #0072FF, #00C6FF);
+    color: white; border-radius: 10px; border: none; font-weight: bold; }
+</style>
 """, unsafe_allow_html=True)
 
 # ==============================
@@ -49,7 +49,7 @@ def extract_text(uploaded_file):
     elif uploaded_file.name.endswith(".docx"):
         return extract_text_from_docx(uploaded_file)
     else:
-        return "Unsupported file format!"
+        return ""
 
 def calculate_ats_score(resume_text, job_desc):
     resume_words = set(re.findall(r'\b\w+\b', resume_text.lower()))
@@ -63,127 +63,102 @@ def calculate_ats_score(resume_text, job_desc):
 # 🧭 SIDEBAR
 # ==============================
 st.sidebar.title("💫 Nuvora AI")
-st.sidebar.markdown("---")
-page = st.sidebar.radio("Navigate to:", ["🏠 Home", "📊 Resume Scanner", "💬 Chat Assistant"])
-st.sidebar.markdown("---")
-st.sidebar.caption("Developed by Pearl and Vasu (Final Year Project)")
+page = st.sidebar.radio("Navigate to:", ["🏠 Home", "📊 Resume Scanner", "🎓 Career Chat"])
+st.sidebar.caption("Final Year Project – Pearl Sethi")
 
 # ==============================
 # 🏠 HOME
 # ==============================
 if page == "🏠 Home":
-    st.markdown('<p class="title">💫 Nuvora AI - Resume Intelligence Dashboard</p>', unsafe_allow_html=True)
+    st.markdown('<p class="title">💫 Nuvora AI – Resume Intelligence Dashboard</p>', unsafe_allow_html=True)
     st.markdown("""
-        <div class='card'>
-        <h3>🚀 Welcome to Nuvora Resume Scanner</h3>
-        <p>Compare your resume with job descriptions and get:</p>
-        <ul>
-        <li>🎯 ATS Score (Resume Match %)</li>
-        <li>📊 Top & Missing Skills</li>
-        <li>💬 Smart Resume Suggestions</li>
-        </ul>
-        </div>
+    <div class='card'>
+    <h3>🚀 Project Overview</h3>
+    <ul>
+    <li>ATS Resume Scoring</li>
+    <li>Skill Gap Analysis</li>
+    <li>Education & Career Chat Assistant</li>
+    </ul>
+    </div>
     """, unsafe_allow_html=True)
 
 # ==============================
-# 📊 ATS RESUME SCANNER
+# 📊 RESUME SCANNER
 # ==============================
 elif page == "📊 Resume Scanner":
     st.markdown('<p class="title">📈 Resume & Job Description Analyzer</p>', unsafe_allow_html=True)
+
     col1, col2 = st.columns(2)
 
     with col1:
         resume_file = st.file_uploader("📄 Upload Resume (PDF/DOCX)", type=["pdf", "docx"])
 
     with col2:
-        jd_option = st.selectbox("🎯 Choose a Job Description", 
-                                 ["-- Select JD --", "Data Scientist", "Web Developer", "AI Engineer", "Software Developer", "Custom Upload"])
-        
+        jd_option = st.selectbox("🎯 Choose Job Description",
+            ["-- Select --", "Data Analyst", "Data Scientist", "Web Developer", "Software Developer"])
+
         jd_presets = {
-            "Data Scientist": "Python, Pandas, NumPy, Machine Learning, Scikit-learn, SQL, Deep Learning, Data Visualization, Model Deployment",
-            "Web Developer": "HTML, CSS, JavaScript, React, Node.js, REST APIs, Git, Responsive Web Design",
-            "AI Engineer": "TensorFlow, PyTorch, NLP, Machine Learning, Python, Deep Learning frameworks",
-            "Software Developer": "Java, C++, OOP, Data Structures, Algorithms, Databases, Problem Solving"
+            "Data Analyst": "Python SQL Excel Power BI Tableau Statistics Data Visualization",
+            "Data Scientist": "Python Machine Learning Statistics Pandas NumPy Scikit-learn",
+            "Web Developer": "HTML CSS JavaScript React Node Git APIs",
+            "Software Developer": "Java C++ OOP Data Structures Algorithms Databases"
         }
 
-        job_desc = ""
-        if jd_option in jd_presets:
-            job_desc = jd_presets[jd_option]
-        elif jd_option == "Custom Upload":
-            jd_file = st.file_uploader("🧾 Upload Job Description (TXT/PDF/DOCX)", type=["txt", "pdf", "docx"])
-            if jd_file:
-                if jd_file.name.endswith(".txt"):
-                    job_desc = jd_file.read().decode("utf-8")
-                else:
-                    job_desc = extract_text(jd_file)
+        job_desc = jd_presets.get(jd_option, "")
 
-    # Analysis
     if resume_file and job_desc:
         resume_text = extract_text(resume_file)
         score, matched, missing = calculate_ats_score(resume_text, job_desc)
 
-        # --- MINI DASHBOARD CARD ---
-        st.markdown("<div class='card'><h4>📊 Resume Match Overview</h4>", unsafe_allow_html=True)
-        dash_col1, dash_col2, dash_col3, dash_col4 = st.columns([1, 1, 1, 1.2])
+        st.markdown("<div class='card'><h4>📊 ATS Result</h4>", unsafe_allow_html=True)
+        c1, c2, c3 = st.columns(3)
 
-        with dash_col1:
-            st.markdown(f"<div class='mini-card'><h3 style='color:#00C6FF;'>{score}%</h3><p>ATS Score</p></div>", unsafe_allow_html=True)
-        with dash_col2:
-            st.markdown(f"<div class='mini-card'><h3 style='color:#34D399;'>{len(matched)}</h3><p>Matched</p></div>", unsafe_allow_html=True)
-        with dash_col3:
-            st.markdown(f"<div class='mini-card'><h3 style='color:#F87171;'>{len(missing)}</h3><p>Missing</p></div>", unsafe_allow_html=True)
-        with dash_col4:
-            fig, ax = plt.subplots(figsize=(2, 2.5))
-            bars = ax.bar(["ATS Match %"], [score], color="#007BFF", width=0.5)
-            fig.patch.set_facecolor("white")
-            ax.set_facecolor("white")
-            ax.set_ylim(0, 100)
-            ax.set_ylabel("Score (%)", fontsize=8, color="black")
-            ax.tick_params(axis='x', colors='black', labelsize=9)
-            ax.tick_params(axis='y', colors='black', labelsize=8)
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            for bar in bars:
-                height = bar.get_height()
-                ax.text(bar.get_x() + bar.get_width()/2, height + 2, f"{score}%", 
-                        ha='center', va='bottom', color='black', fontsize=10, fontweight='bold')
-            st.pyplot(fig)
+        with c1:
+            st.markdown(f"<div class='mini-card'><h3>{score}%</h3><p>ATS Score</p></div>", unsafe_allow_html=True)
+        with c2:
+            st.markdown(f"<div class='mini-card'><h3>{len(matched)}</h3><p>Matched Skills</p></div>", unsafe_allow_html=True)
+        with c3:
+            st.markdown(f"<div class='mini-card'><h3>{len(missing)}</h3><p>Missing Skills</p></div>", unsafe_allow_html=True)
 
-        st.markdown("</div>", unsafe_allow_html=True)
+        fig, ax = plt.subplots()
+        ax.bar(["ATS Score"], [score])
+        ax.set_ylim(0, 100)
+        st.pyplot(fig)
 
-        # Missing Keywords Section
-        st.markdown("<div class='card'><h4>🔍 Missing Keywords:</h4>", unsafe_allow_html=True)
-        if missing:
-            st.write(", ".join(list(missing)[:10]))
-        else:
-            st.write("✅ Your resume covers all key skills!")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        st.info(f"💡 Suggestion: Add missing keywords related to {jd_option} to boost your ATS score.")
+        st.markdown("<div class='card'><b>Missing Keywords:</b></div>", unsafe_allow_html=True)
+        st.write(", ".join(list(missing)[:10]))
 
 # ==============================
-# 💬 CHAT ASSISTANT
+# 🎓 EDUCATION & CAREER CHAT
 # ==============================
-elif page == "💬 Chat Assistant":
-    st.markdown('<p class="title">💬 Nuvora Chat</p>', unsafe_allow_html=True)
-    st.markdown("<div class='card'>Chat with Nuvora for resume tips, interview prep, and skill advice!</div>", unsafe_allow_html=True)
+elif page == "🎓 Career Chat":
+    st.markdown('<p class="title">🎓 Career & Education Chat</p>', unsafe_allow_html=True)
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    user_input = st.text_input("💭 You:", placeholder="Ask me anything about career or resume...")
+    user_input = st.text_input("Student Query:", placeholder="Example: Data Analyst skills")
 
     if user_input:
-        st.session_state.chat_history.append(("You", user_input))
-        if "resume" in user_input.lower():
-            reply = "Your resume should highlight your technical skills, certifications, and relevant projects."
-        elif "skill" in user_input.lower():
-            reply = "Focus on Python, SQL, and visualization tools like Power BI or Tableau for analytics roles."
-        elif "interview" in user_input.lower():
-            reply = "Prepare for HR and technical rounds. Be ready to explain your projects clearly."
+        st.session_state.chat_history.append(("Student", user_input))
+        msg = user_input.lower()
+
+        if "data analyst" in msg:
+            reply = "Data Analyst needs Python, SQL, Excel, Power BI/Tableau, Statistics and projects."
+        elif "data scientist" in msg:
+            reply = "Data Scientist needs ML, Python, Statistics, Pandas, NumPy and higher studies."
+        elif "web developer" in msg:
+            reply = "Web Developer needs HTML, CSS, JS, React, backend basics and projects."
+        elif "resume" in msg:
+            reply = "Student resume should include skills, projects, internships and ATS keywords."
+        elif "interview" in msg:
+            reply = "Prepare core subjects, project explanation and practice aptitude."
+        elif "skill" in msg:
+            reply = "Learn one skill deeply, practice projects and maintain GitHub."
         else:
-            reply = "I'm your career buddy! Ask about resume tips, interview advice, or skill growth."
-        st.session_state.chat_history.append(("Nuvora 💫", reply))
+            reply = "Ask education or career related questions only."
+
+        st.session_state.chat_history.append(("Nuvora 🎓", reply))
 
     for sender, msg in st.session_state.chat_history:
         st.markdown(f"<div class='card'><b>{sender}:</b><br>{msg}</div>", unsafe_allow_html=True)
@@ -191,4 +166,4 @@ elif page == "💬 Chat Assistant":
 # ==============================
 # 🧾 FOOTER
 # ==============================
-st.markdown("<hr><p style='text-align:center;color:gray;'>Developed with ❤️ by Pearl and Vasu</p>", unsafe_allow_html=True)
+st.markdown("<hr><p style='text-align:center;color:gray;'>Developed by Pearl Sethi</p>", unsafe_allow_html=True)
