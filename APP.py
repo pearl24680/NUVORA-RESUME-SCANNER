@@ -195,59 +195,6 @@ elif page=="💬 Chat Assistant":
             reply = get_chat_response(user_input)
             st.session_state.chat_history.append(("Nuvora 💫", reply))
             st.experimental_rerun()
-# Chat Assistant Responses
-def get_chat_response(msg):
-    msg = msg.lower()
-    # Greetings
-    if any(g in msg for g in ["hi","hello","hey"]):
-        return "👋 Hello! I'm Nuvora, your career buddy. Ask me about resume tips, interview prep, skill growth, courses, or coding help."
-    
-    # Resume queries
-    elif "resume" in msg or "cv" in msg:
-        return ("📄 Resume Tips:\n"
-                "- Keep it 1–2 pages.\n"
-                "- Highlight skills, projects, and achievements.\n"
-                "- Make it ATS-friendly.\n"
-                "- Use action verbs and quantify results.")
-    
-    # Skill queries
-    elif "skill" in msg or "skills" in msg:
-        return ("💡 Skill Guidance:\n"
-                "- Data Analyst: Python, SQL, Excel, Power BI/Tableau.\n"
-                "- Data Scientist: Python, ML, Statistics, Pandas, NumPy.\n"
-                "- Web Developer: HTML, CSS, JavaScript, React, Node.\n"
-                "Pro tip: Build small projects to showcase skills.")
-    
-    # Interview queries
-    elif "interview" in msg:
-        return ("🎤 Interview Tips:\n"
-                "- Revise key concepts.\n"
-                "- Be ready to explain projects.\n"
-                "- Practice behavioral and technical questions.\n"
-                "- Mock interviews help a lot!")
-    
-    # Course / learning guidance
-    elif "course" in msg or "learn" in msg:
-        return ("🎓 Learning Path:\n"
-                "- For Data Science: Python → Statistics → ML → Deep Learning → Projects.\n"
-                "- For Web Development: HTML/CSS → JS → React → Backend → Portfolio.\n"
-                "- For AI: Python → ML → DL → NLP → Projects.")
-    
-    # Coding queries
-    elif any(k in msg for k in ["python","javascript","code","loop","function","algorithm"]):
-        return ("💻 Coding Help:\n"
-                "- Ask me for Python or JavaScript examples, loops, functions, algorithms.\n"
-                "- I can give small snippets or explain logic step by step.")
-    
-    # Farewell
-    elif any(f in msg for f in ["bye","see you","thank you","thanks"]):
-        return "👋 Goodbye! Keep learning and improving your skills. Come back anytime!"
-    
-    # Fallback
-    else:
-        return "🤔 I'm not sure about that. Please ask about career, resume, skills, courses, interview, or coding."
-
-
 
 
 # ==============================
