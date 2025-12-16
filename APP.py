@@ -70,6 +70,16 @@ body, .stApp {
     margin-bottom: 10px;
     word-wrap: break-word;
 }
+
+/* Scrollable chat container */
+.chat-container {
+    height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #333;
+    border-radius: 10px;
+    background-color: #0A0F24;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -163,11 +173,17 @@ elif page == "🎓 Career & Course Chat":
     if "history" not in st.session_state:
         st.session_state.history = []
 
-    # Chat input
-    user_input = st.text_input(
-        "Student Query",
-        placeholder="Example: Data Science full course"
-    )
+    # Scrollable chat container
+    st.markdown("<div class='chat-container'>", unsafe_allow_html=True)
+    for role, text in st.session_state.history:
+        if role == "Student":
+            st.markdown(f"<div class='user-msg'>{text}</div>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<div class='bot-msg'>{text}</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # Input box always at the bottom
+    user_input = st.text_input("Type your message here...", key="input")
 
     if user_input:
         msg = user_input.lower()
@@ -236,15 +252,7 @@ elif page == "🎓 Career & Course Chat":
             )
 
         st.session_state.history.append(("Nuvora 🎓", reply))
-
-    # Display chat with bubbles
-    chat_placeholder = st.container()
-    with chat_placeholder:
-        for role, text in st.session_state.history:
-            if role == "Student":
-                st.markdown(f"<div class='user-msg'>{text}</div>", unsafe_allow_html=True)
-            else:
-                st.markdown(f"<div class='bot-msg'>{text}</div>", unsafe_allow_html=True)
+        st.experimental_rerun()  # Refresh page to show new messages at bottom
 
 # ==============================
 # FOOTER
