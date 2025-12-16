@@ -164,47 +164,59 @@ elif page == "📊 Resume Scanner":
 # ==============================
 # 💬 CHAT ASSISTANT
 # ==============================
-elif page=="💬 Chat Assistant":
-    st.markdown('<p class="title">💬 Nuvora Chat</p>', unsafe_allow_html=True)
-    st.markdown("<div class='card'>Chat with Nuvora for resume tips, interview prep, skill growth, or code queries!</div>", unsafe_allow_html=True)
+# Chat Assistant Responses
+def get_chat_response(msg):
+    msg = msg.lower()
+    # Greetings
+    if any(g in msg for g in ["hi","hello","hey"]):
+        return "👋 Hello! I'm Nuvora, your career buddy. Ask me about resume tips, interview prep, skill growth, courses, or coding help."
+    
+    # Resume queries
+    elif "resume" in msg or "cv" in msg:
+        return ("📄 Resume Tips:\n"
+                "- Keep it 1–2 pages.\n"
+                "- Highlight skills, projects, and achievements.\n"
+                "- Make it ATS-friendly.\n"
+                "- Use action verbs and quantify results.")
+    
+    # Skill queries
+    elif "skill" in msg or "skills" in msg:
+        return ("💡 Skill Guidance:\n"
+                "- Data Analyst: Python, SQL, Excel, Power BI/Tableau.\n"
+                "- Data Scientist: Python, ML, Statistics, Pandas, NumPy.\n"
+                "- Web Developer: HTML, CSS, JavaScript, React, Node.\n"
+                "Pro tip: Build small projects to showcase skills.")
+    
+    # Interview queries
+    elif "interview" in msg:
+        return ("🎤 Interview Tips:\n"
+                "- Revise key concepts.\n"
+                "- Be ready to explain projects.\n"
+                "- Practice behavioral and technical questions.\n"
+                "- Mock interviews help a lot!")
+    
+    # Course / learning guidance
+    elif "course" in msg or "learn" in msg:
+        return ("🎓 Learning Path:\n"
+                "- For Data Science: Python → Statistics → ML → Deep Learning → Projects.\n"
+                "- For Web Development: HTML/CSS → JS → React → Backend → Portfolio.\n"
+                "- For AI: Python → ML → DL → NLP → Projects.")
+    
+    # Coding queries
+    elif any(k in msg for k in ["python","javascript","code","loop","function","algorithm"]):
+        return ("💻 Coding Help:\n"
+                "- Ask me for Python or JavaScript examples, loops, functions, algorithms.\n"
+                "- I can give small snippets or explain logic step by step.")
+    
+    # Farewell
+    elif any(f in msg for f in ["bye","see you","thank you","thanks"]):
+        return "👋 Goodbye! Keep learning and improving your skills. Come back anytime!"
+    
+    # Fallback
+    else:
+        return "🤔 I'm not sure about that. Please ask about career, resume, skills, courses, interview, or coding."
 
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
 
-    # Scrollable WhatsApp-style chat container
-    chat_placeholder = st.empty()
-    with chat_placeholder.container():
-        st.markdown("<div class='chat-container'>", unsafe_allow_html=True)
-        for sender, msg in st.session_state.chat_history:
-            if sender=="You":
-                st.markdown(f"<div class='user-msg'>{msg}</div>", unsafe_allow_html=True)
-            else:
-                st.markdown(f"<div class='bot-msg'>{msg}</div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # Input at bottom
-    with st.form(key="chat_form", clear_on_submit=True):
-        col1, col2 = st.columns([8,1])
-        with col1:
-            user_input = st.text_input("💭 Type your message here...")
-        with col2:
-            submit_btn = st.form_submit_button("Send")
-
-        if submit_btn and user_input:
-            st.session_state.chat_history.append(("You", user_input))
-            msg = user_input.lower()
-            if "resume" in msg:
-                reply = "Your resume should highlight technical skills, certifications, and projects."
-            elif "skill" in msg:
-                reply = "Focus on Python, SQL, Power BI/Tableau for analytics roles."
-            elif "interview" in msg:
-                reply = "Prepare for HR & technical rounds. Be ready to explain your projects clearly."
-            elif any(k in msg for k in ["python","javascript","code","loop","function"]):
-                reply = "💻 CODE HELP: Ask me about Python/JS examples, loops, functions, or concepts."
-            else:
-                reply = "I'm your career buddy! Ask about resume, interview, skills, or code."
-            st.session_state.chat_history.append(("Nuvora 💫", reply))
-            st.experimental_rerun()
 
 
 # ==============================
