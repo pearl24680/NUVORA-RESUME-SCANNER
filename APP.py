@@ -182,7 +182,7 @@ elif page=="💬 Chat Assistant":
                 st.markdown(f"<div class='bot-msg'>{msg}</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # Input form at bottom
+    # Input at bottom
     with st.form(key="chat_form", clear_on_submit=True):
         col1, col2 = st.columns([8,1])
         with col1:
