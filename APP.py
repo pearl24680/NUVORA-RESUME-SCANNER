@@ -164,6 +164,37 @@ elif page == "📊 Resume Scanner":
 # ==============================
 # 💬 CHAT ASSISTANT
 # ==============================
+elif page=="💬 Chat Assistant":
+    st.markdown('<p class="title">💬 Nuvora Chat</p>', unsafe_allow_html=True)
+    st.markdown("<div class='card'>Chat with Nuvora for resume, skills, interview, courses, or coding guidance!</div>", unsafe_allow_html=True)
+
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+
+    # Chat container
+    chat_placeholder = st.empty()
+    with chat_placeholder.container():
+        st.markdown("<div class='chat-container'>", unsafe_allow_html=True)
+        for sender, msg in st.session_state.chat_history:
+            if sender=="You":
+                st.markdown(f"<div class='user-msg'>{msg}</div>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<div class='bot-msg'>{msg}</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # Input at bottom
+    with st.form(key="chat_form", clear_on_submit=True):
+        col1, col2 = st.columns([8,1])
+        with col1:
+            user_input = st.text_input("💭 Type your message here...")
+        with col2:
+            submit_btn = st.form_submit_button("Send")
+
+        if submit_btn and user_input:
+            st.session_state.chat_history.append(("You", user_input))
+            reply = get_chat_response(user_input)
+            st.session_state.chat_history.append(("Nuvora 💫", reply))
+            st.experimental_rerun()
 # Chat Assistant Responses
 def get_chat_response(msg):
     msg = msg.lower()
